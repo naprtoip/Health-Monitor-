@@ -1120,17 +1120,41 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 
           <!-- Sync panel (visible when connected) -->
           <div id="driveSyncPanel" style="display:none;margin-top:16px;padding:14px;background:#f8f9ff;border-radius:10px;border:1px solid #c5cae9">
-            <div style="font-weight:700;color:#1a237e;font-size:.88em;margin-bottom:12px">☁️ Sincronizzazione profili</div>
-            <div id="driveFilesList" style="font-size:.82em;color:#555;margin-bottom:12px"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button onclick="syncCurrentProfileToDrive()" style="padding:8px 16px;background:#1565c0;color:white;border:none;border-radius:7px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.8em;font-weight:700">
-                ⬆️ Carica profilo attivo su Drive
+
+            <!-- BACKUP COMPLETO -->
+            <div style="font-weight:700;color:#1a237e;font-size:.88em;margin-bottom:10px">☁️ Backup &amp; Ripristino</div>
+            <p style="font-size:.8em;color:#555;margin-bottom:12px;line-height:1.6">
+              Il backup completo include: misurazioni, glicemia (tutti i mesi), pressione, analisi sangue, documenti e impostazioni.
+            </p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+              <button id="driveBackupBtn" onclick="backupCompletoDrive()"
+                style="padding:10px 18px;background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.82em;font-weight:700">
+                ☁️ Backup Completo su Drive
               </button>
-              <button onclick="loadProfileFromDrive()" style="padding:8px 16px;background:white;color:#1565c0;border:1px solid #1565c0;border-radius:7px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.8em;font-weight:700">
-                ⬇️ Scarica da Drive
-              </button>
-              <button onclick="listDriveFiles()" style="padding:8px 12px;background:#eee;color:#555;border:none;border-radius:7px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em">
+              <button onclick="listBackupFiles()"
+                style="padding:10px 12px;background:#eee;color:#555;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em">
                 🔄 Aggiorna lista
+              </button>
+            </div>
+
+            <!-- Lista backup -->
+            <div id="driveBackupList" style="font-size:.82em;color:#555;margin-bottom:16px">
+              <em style="color:#aaa">Clicca "Aggiorna lista" per vedere i backup disponibili.</em>
+            </div>
+
+            <hr style="border:none;border-top:1px solid #dde;margin:14px 0">
+
+            <!-- Vecchia sync profili (mantenuta) -->
+            <div style="font-weight:600;color:#555;font-size:.82em;margin-bottom:8px">Sincronizzazione profili (legacy)</div>
+            <div id="driveFilesList" style="font-size:.82em;color:#555;margin-bottom:10px"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="syncCurrentProfileToDrive()"
+                style="padding:7px 14px;background:#546e7a;color:white;border:none;border-radius:7px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em;font-weight:600">
+                ⬆️ Carica profilo attivo
+              </button>
+              <button onclick="loadProfileFromDrive()"
+                style="padding:7px 14px;background:white;color:#546e7a;border:1px solid #546e7a;border-radius:7px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em">
+                ⬇️ Scarica profilo
               </button>
             </div>
           </div>
@@ -1663,7 +1687,7 @@ function onDriveConnected(){
   document.getElementById('driveDisconnectBtn').style.display = 'inline-block';
   document.getElementById('driveSyncPanel').style.display     = 'block';
   updateDriveStatusChip();
-  getOrCreateDriveFolder().then(() => listDriveFiles());
+  getOrCreateDriveFolder().then(() => { listDriveFiles(); listBackupFiles(); });
 }
 
 function disconnectDrive(){
@@ -1820,6 +1844,92 @@ async function loadProfileFromDrive(){
   setDriveStatus('👆 Clicca ⬇️ accanto al file da scaricare.', '#1565c0');
 }
 
+// ── BACKUP COMPLETO SU DRIVE ─────────────────────────────────
+async function backupCompletoDrive(){
+  if(!driveAccessToken){ alert('Connetti prima Google Drive.'); return; }
+  const btn = document.getElementById('driveBackupBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Backup in corso…'; }
+  setDriveStatus('⏳ Creazione backup completo…', '#1565c0');
+  try{
+    await getOrCreateDriveFolder();
+    const now  = new Date();
+    const ts   = now.getFullYear()+'-'
+      +String(now.getMonth()+1).padStart(2,'0')+'-'
+      +String(now.getDate()).padStart(2,'0')+'_'
+      +String(now.getHours()).padStart(2,'0')+'-'
+      +String(now.getMinutes()).padStart(2,'0');
+    const profName = getActiveProfileName().replace(/\s+/g,'_');
+    const filename = `HMP_backup_${profName}_${ts}.json`;
+    const backup   = buildFullBackup();
+    const content  = JSON.stringify(backup, null, 2);
+    const blob     = new Blob([content], {type:'application/json'});
+    const form     = new FormData();
+    form.append('metadata', new Blob([JSON.stringify({
+      name: filename, parents:[driveFolderId]
+    })], {type:'application/json'}));
+    form.append('file', blob);
+    await driveRequest('POST',
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', form);
+    const kb = Math.round(content.length/1024);
+    setDriveStatus(`✅ Backup completato! (${kb} KB) — ${filename}`, '#2e7d32');
+    listBackupFiles();
+  } catch(e){
+    setDriveStatus('❌ Errore backup: '+e.message, '#c62828');
+  } finally{
+    if(btn){ btn.disabled = false; btn.textContent = '☁️ Backup Completo su Drive'; }
+  }
+}
+
+async function listBackupFiles(){
+  const listEl = document.getElementById('driveBackupList');
+  if(!driveAccessToken || !listEl) return;
+  listEl.innerHTML = '<em style="color:#aaa;font-size:.82em">Caricamento…</em>';
+  try{
+    await getOrCreateDriveFolder();
+    const q = encodeURIComponent(`'${driveFolderId}' in parents and trashed=false`);
+    const r = await driveRequest('GET',
+      `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime,size)&orderBy=modifiedTime desc`);
+    const d = await r.json();
+    if(!d.files || d.files.length === 0){
+      listEl.innerHTML = '<em style="color:#aaa;font-size:.82em">Nessun backup ancora.</em>';
+      return;
+    }
+    listEl.innerHTML = d.files.map(f=>{
+      const date = new Date(f.modifiedTime).toLocaleString('it-IT');
+      const kb   = f.size ? Math.round(f.size/1024)+' KB' : '';
+      const isBackup = f.name.startsWith('HMP_backup_');
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eee;flex-wrap:wrap">
+        <span style="font-size:.85em">${isBackup?'☁️':'📄'}</span>
+        <span style="flex:1;font-size:.8em;color:#333;word-break:break-all">${f.name}</span>
+        <span style="font-size:.75em;color:#aaa;white-space:nowrap">${kb}</span>
+        <span style="font-size:.75em;color:#888;white-space:nowrap">${date}</span>
+        <button onclick="ripristinaDaDrive('${f.id}','${f.name}')"
+          style="padding:4px 10px;background:#e8f5e9;color:#2e7d32;border:none;border-radius:5px;cursor:pointer;font-size:.76em;font-weight:700;white-space:nowrap">
+          ⬇️ Ripristina
+        </button>
+      </div>`;
+    }).join('');
+  } catch(e){
+    if(listEl) listEl.innerHTML = `<span style="color:#c62828;font-size:.82em">Errore: ${e.message}</span>`;
+  }
+}
+
+async function ripristinaDaDrive(fileId, filename){
+  if(!confirm(`Ripristinare il backup:\n"${filename}"?\n\nI dati attuali verranno sovrascritti.`)) return;
+  setDriveStatus('⏳ Download backup da Drive…', '#1565c0');
+  try{
+    const r    = await driveRequest('GET', `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+    const data = await r.json();
+    if(!data._app || data._app !== 'HealthMonitorPro'){
+      if(!confirm('Il file non sembra un backup di Health Monitor. Continuare?')) return;
+    }
+    restoreProfileBackup(data, filename);
+    setDriveStatus(`✅ Backup ripristinato: ${filename}`, '#2e7d32');
+  } catch(e){
+    setDriveStatus('❌ Errore ripristino: '+e.message, '#c62828');
+  }
+}
+
 function openDrivePanel(){
   showSection('settings');
   document.querySelector('.nav-tab:last-child')?.classList.add('active');
@@ -1830,17 +1940,53 @@ function openDrivePanel(){
 }
 
 function buildProfileBackup(){
+  return buildFullBackup();
+}
+
+function buildFullBackup(){
+  const pid = getActiveProfileId();
+
+  // ── Raccoglie tutti i mesi glicemia ──
+  const glucoseMonths = {};
+  const glucPfx = `hm_p_${pid}_glucose_m_`;
+  for(let i = 0; i < localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith(glucPfx)){
+      try{ glucoseMonths[k.replace(glucPfx,'')] = JSON.parse(localStorage.getItem(k)); }catch(e){}
+    }
+  }
+
+  // ── Raccoglie tutti i mesi pressione ──
+  const pressureMonths = {};
+  const presPfx = `hm_p_${pid}_pressure_m_`;
+  for(let i = 0; i < localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith(presPfx)){
+      try{ pressureMonths[k.replace(presPfx,'')] = JSON.parse(localStorage.getItem(k)); }catch(e){}
+    }
+  }
+
   return {
-    _version:    '2.0',
-    _app:        'HealthMonitorPro',
-    _exportedAt: new Date().toISOString(),
-    _profileId:  getActiveProfileId(),
-    _profileName:getActiveProfileName(),
+    _version:     '2.1',
+    _app:         'HealthMonitorPro',
+    _exportedAt:  new Date().toISOString(),
+    _profileId:   pid,
+    _profileName: getActiveProfileName(),
+    _backupType:  'full',
     healthData, bloodAnalyses, appSettings,
-    documents:   uploadedDocuments,
-    creditHistory:  loadCreditHistory(),
-    budgetSettings: loadBudgetSettings(),
-    ferrettiRelazione: loadRelazione(),
+    documents:    uploadedDocuments,
+    creditHistory:    loadCreditHistory(),
+    budgetSettings:   loadBudgetSettings(),
+    ferrettiRelazione:loadRelazione(),
+    glucose:{
+      schedule:   loadGlucoseSchedule(),
+      alertTimes: loadAlertTimes(),
+      months:     glucoseMonths
+    },
+    pressure:{
+      alertTimes: loadPressureAlertTimes(),
+      months:     pressureMonths
+    }
   };
 }
 
@@ -1853,13 +1999,11 @@ function restoreProfileBackup(data, filename){
 
   const existing = profiles.find(p => p.id === srcId);
   if(!existing){
-    // Create new profile entry
     const newProf = { id: srcId, name: srcName, color:'#1e88e5', createdAt: new Date().toISOString() };
     profiles.push(newProf);
     saveProfiles(profiles);
   }
 
-  // Write data into that profile's keys
   const keys = profileKeys(targetId);
   if(data.healthData)    localStorage.setItem(keys.healthData,    JSON.stringify(data.healthData));
   if(data.bloodAnalyses) localStorage.setItem(keys.bloodAnalyses, JSON.stringify(data.bloodAnalyses));
@@ -1867,10 +2011,33 @@ function restoreProfileBackup(data, filename){
   if(data.documents)     localStorage.setItem(keys.documents,     JSON.stringify(data.documents));
   if(data.ferrettiRelazione) localStorage.setItem(`hm_p_${targetId}_relazione`, JSON.stringify(data.ferrettiRelazione));
 
-  // Switch to that profile
+  // ── Ripristina glicemia ──
+  if(data.glucose){
+    if(data.glucose.schedule)
+      localStorage.setItem(`hm_p_${targetId}_glucose_schedule`,   JSON.stringify(data.glucose.schedule));
+    if(data.glucose.alertTimes)
+      localStorage.setItem(`hm_p_${targetId}_glucose_alertTimes`, JSON.stringify(data.glucose.alertTimes));
+    if(data.glucose.months){
+      Object.entries(data.glucose.months).forEach(([mk,val])=>{
+        localStorage.setItem(`hm_p_${targetId}_glucose_m_${mk}`, JSON.stringify(val));
+      });
+    }
+  }
+
+  // ── Ripristina pressione ──
+  if(data.pressure){
+    if(data.pressure.alertTimes)
+      localStorage.setItem(`hm_p_${targetId}_pressure_alertTimes`, JSON.stringify(data.pressure.alertTimes));
+    if(data.pressure.months){
+      Object.entries(data.pressure.months).forEach(([mk,val])=>{
+        localStorage.setItem(`hm_p_${targetId}_pressure_m_${mk}`, JSON.stringify(val));
+      });
+    }
+  }
+
   switchProfile(targetId);
   renderProfileBar();
-  alert(`✅ Profilo "${srcName}" importato da Drive!`);
+  alert(`✅ Backup "${srcName}" ripristinato correttamente!\n\nDati ripristinati: misurazioni, glicemia, pressione, analisi sangue, documenti.`);
 }
 
 let healthData = [];
@@ -2044,6 +2211,9 @@ window.onload = function() {
   renderBloodAnalyses();
   updateRelazioneUI();
   setTimeout(()=>{ if(healthData.length>0) showChart('bmi'); }, 100);
+  // ── Avvia alert al caricamento (fix: non aspettare apertura scheda Glicemia) ──
+  setTimeout(scheduleAllAlerts, 800);
+  startAlertPoller();
 };
 
 // ============================================================
@@ -2081,6 +2251,7 @@ function showSection(id, btn) {
   if(id==='ai') updateRelazioneUI();
   if(id==='glucose'){ initGlucoseSection(); }
   if(id==='pressure'){ initPressureSection(); }
+  scheduleAllAlerts(); // reschedule whenever navigating sections
 }
 
 // ============================================================
@@ -3244,7 +3415,7 @@ function updatePressureAlertUI(){
 
 let pressureAlertTimers = [];
 function schedulePressureAlerts(){
-  if(Notification.permission !== 'granted') return;
+  if(typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
   pressureAlertTimers.forEach(t=>clearTimeout(t));
   pressureAlertTimers = [];
   const times = loadPressureAlertTimes();
@@ -3705,7 +3876,7 @@ function updateNotifStatus(){
 
   if(!('Notification' in window)){
     el.innerHTML = isIOS
-      ? '📱 <strong>iPhone:</strong> gli alert push non sono supportati da Safari come pagina web.<br><span style="font-size:.92em">Aggiungi l\'app alla schermata Home (<strong>Condividi → Aggiungi a Home</strong>) per abilitarli.</span>'
+      ? '📱 <strong>iPhone:</strong> gli alert push non sono supportati da Safari come pagina web.<br><span style="font-size:.92em">Aggiungi l\'app alla schermata Home (<strong>Condividi → Aggiungi a Home</strong>) per abilitarli.</span><br><span style="font-size:.85em;color:#e65100">⚠️ Finché la pagina è aperta, il poller interno ti avviserà lo stesso ogni minuto.</span>'
       : '⚠️ Notifiche non supportate in questo browser';
     el.style.color = '#e65100';
     el.style.lineHeight = '1.6';
@@ -3713,8 +3884,9 @@ function updateNotifStatus(){
     return;
   }
   if(Notification.permission === 'granted'){
-    el.textContent = '🔔 Notifiche attive';
+    el.innerHTML = '🔔 Notifiche attive &nbsp;<span style="font-size:.85em;color:#555;font-weight:400">— funzionano mentre la pagina è aperta. Per riceverle anche a schermo spento, aggiungi l\'app alla schermata Home (iOS: Condividi → Aggiungi a Home / Android: menu → Installa app).</span>';
     el.style.color = '#2e7d32';
+    el.style.lineHeight = '1.6';
     if(btn) btn.style.display = 'none';
   } else if(Notification.permission === 'denied'){
     el.innerHTML = '🔕 Notifiche bloccate.<br><span style="font-size:.9em">Vai in Impostazioni browser → questo sito → Notifiche → Consenti</span>';
@@ -3728,7 +3900,7 @@ function updateNotifStatus(){
 }
 
 function scheduleGlucoseAlerts(){
-  if(Notification.permission !== 'granted') return;
+  if(typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
   // Clear existing timers
   glucoseAlertTimers.forEach(t => clearTimeout(t));
   glucoseAlertTimers = [];
@@ -3774,6 +3946,99 @@ function scheduleGlucoseAlerts(){
     glucoseAlertTimers.push(timer);
   });
 }
+
+// ── MASTER SCHEDULER ─────────────────────────────────────────
+// Runs at startup + on every section change + on visibility restore.
+// Combines glucose and pressure alerts so nothing is missed.
+function scheduleAllAlerts(){
+  scheduleGlucoseAlerts();
+  if(typeof schedulePressureAlerts === 'function') schedulePressureAlerts();
+}
+
+// ── POLLER (backup) ──────────────────────────────────────────
+// Checks every 60 s whether an alert time has just passed
+// (protects against setTimeout delays after phone wake-up)
+let _alertPollerTimer = null;
+function startAlertPoller(){
+  if(_alertPollerTimer) clearInterval(_alertPollerTimer);
+  _alertPollerTimer = setInterval(_pollAlerts, 60000);
+}
+function _pollAlerts(){
+  if(typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  const now     = new Date();
+  const day     = now.getDate();
+  const monthKey= now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+
+  // ── Glucose ──
+  try{
+    const schedule     = loadGlucoseSchedule();
+    const times        = loadAlertTimes();
+    const measurements = loadGlucoseMeasurements(monthKey);
+    const slotIdx      = schedule[day];
+    if(slotIdx !== undefined){
+      const slot = GLUCOSE_SLOTS[slotIdx];
+      if(slot && !measurements[`${day}_${slot.id}`]){
+        const [h,m]   = times[slot.id].split(':').map(Number);
+        const alertAt = new Date(now.getFullYear(),now.getMonth(),day,h,m,0);
+        const diffMs  = now - alertAt;
+        // Finestra: scattata da ≤0 a ≤2 min fa
+        if(diffMs >= 0 && diffMs < 120000){
+          const firedKey = `hmGlucFired_${day}_${slot.id}_${monthKey}`;
+          if(!sessionStorage.getItem(firedKey)){
+            sessionStorage.setItem(firedKey,'1');
+            const n = new Notification('🩸 Health Monitor — Glicemia',{
+              body:`Ora di misurare: ${slot.label} (giorno ${day})`,
+              tag :`glucose_${day}_${slot.id}`,
+              requireInteraction:true
+            });
+            n.onclick=()=>{
+              window.focus();
+              showSection('glucose');
+              document.getElementById('glucoseMonth').value=monthKey;
+              renderGlucoseSchema();
+              setTimeout(()=>openGlucoseEntry(day,slotIdx,monthKey),400);
+              n.close();
+            };
+          }
+        }
+      }
+    }
+  } catch(e){}
+
+  // ── Pressure (if module present) ──
+  try{
+    const ptimes = loadPressureAlertTimes();
+    ['mattina','sera'].forEach(slot=>{
+      const [h,m]   = ptimes[slot].split(':').map(Number);
+      const alertAt = new Date(now.getFullYear(),now.getMonth(),day,h,m,0);
+      const diffMs  = now - alertAt;
+      if(diffMs >= 0 && diffMs < 120000){
+        const firedKey = `hmPresFired_${day}_${slot}_${monthKey}`;
+        if(!sessionStorage.getItem(firedKey)){
+          sessionStorage.setItem(firedKey,'1');
+          new Notification('💓 Health Monitor — Pressione',{
+            body:`Ricorda di misurare la pressione (${slot})`,
+            tag :`pressure_${day}_${slot}`,
+            requireInteraction:true
+          });
+        }
+      }
+    });
+  } catch(e){}
+}
+
+// ── VISIBILITY HANDLER ───────────────────────────────────────
+// Quando il browser/telefono torna in primo piano, rischedula
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    scheduleAllAlerts();
+    _pollAlerts(); // controllo immediato
+  }
+});
+window.addEventListener('pageshow', ()=>{
+  scheduleAllAlerts();
+  _pollAlerts();
+});
 
 // Re-schedule when section opens or day changes
 function initGlucoseSection(){
