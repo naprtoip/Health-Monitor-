@@ -2,25 +2,39 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Health Monitor Pro v2.0</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&family=Montserrat:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
-  --primary:#1a2a4a;--secondary:#2c3e50;--accent:#c9a962;--accent-light:#e8d5a3;
-  --bg-cream:#faf8f5;--bg-warm:#f5f2ed;--text-dark:#2c3e50;--text-light:#6b7c93;
-  --success:#4a7c59;--warning:#c4973b;--danger:#8b3a3a;--info:#4a6fa5;
+  /* ── Palette unificata (allineata a Mounjaro Tracker) ── */
+  --primary:#1a2a4a;--secondary:#2c3e50;
+  --accent:#B8912A;--accent-light:#E8D5A0;--accent-pl:#F7F0DF;
+  --bg-cream:#FAF7F2;--bg-warm:#F3EFE8;--bg-warm2:#EDE8DF;
+  --text-dark:#1E1A14;--text-mid:#6B6357;--text-light:#A49E94;
+  --border:#DDD8CE;
+  --teal:#3A7D6E;--teal-pl:#E6F2EF;
+  --success:#4a7c59;--success-pl:#e8f5e9;
+  --warning:#c4973b;--warning-pl:#fff8e1;
+  --danger:#C05050;--danger-pl:#F9ECEC;
+  --info:#4a6fa5;
+  --violet:#6B5B9E;--violet-lt:#e8d5ff;--violet-pl:rgba(107,91,158,.08);
+  --rose:#C05050;--rose-pl:#F9ECEC;
+  /* ── Geometry ── */
+  --radius:14px;--rsm:8px;
+  --sh:0 2px 12px rgba(30,26,20,.08);--sh-md:0 4px 24px rgba(30,26,20,.12);
 }
 html{scroll-behavior:smooth}
-body{font-family:'Montserrat',sans-serif;background:var(--bg-cream);color:var(--text-dark);min-height:100vh;line-height:1.6;overflow-x:hidden;padding-bottom:100px}
-::-webkit-scrollbar{width:8px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg-cream);color:var(--text-dark);min-height:100vh;line-height:1.6;overflow-x:hidden;padding-bottom:72px}
+::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--bg-warm)}
-::-webkit-scrollbar-thumb{background:var(--accent);border-radius:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
 .container{max-width:1200px;margin:0 auto;padding:20px}
 header{background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%);color:white;padding:40px 20px;text-align:center;position:relative;overflow:hidden}
 header::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a962' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");opacity:0.5}
@@ -32,28 +46,31 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 .patient-info span{color:var(--accent);font-weight:600}
 .disclaimer{background:linear-gradient(135deg,#f8f4f0,#fff);border-left:4px solid var(--warning);padding:20px;margin:20px;border-radius:0 8px 8px 0;font-size:.85em;color:var(--text-light);box-shadow:0 2px 15px rgba(0,0,0,.05)}
 .disclaimer strong{color:var(--warning);display:block;margin-bottom:8px;font-size:.9em;text-transform:uppercase;letter-spacing:1px}
-.nav-tabs{display:flex;gap:5px;padding:15px;background:white;border-bottom:1px solid rgba(0,0,0,.08);overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:0;z-index:100}
-.nav-tab{padding:10px 18px;background:transparent;border:1px solid var(--accent);color:var(--primary);font-family:'Montserrat',sans-serif;font-size:.8em;font-weight:500;cursor:pointer;border-radius:30px;transition:all .3s;white-space:nowrap;flex-shrink:0}
+.nav-tabs{display:flex;gap:5px;padding:15px;background:white;border-bottom:1px solid rgba(0,0,0,.08);overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:0;z-index:100;-ms-overflow-style:none;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tabs-wrap{position:sticky;top:0;z-index:100;background:white}
+.nav-tabs-wrap::after{content:'';position:absolute;right:0;top:0;bottom:0;width:32px;background:linear-gradient(to right,transparent,white);pointer-events:none;border-bottom:1px solid rgba(0,0,0,.08)}
+.nav-tab{padding:9px 18px;background:transparent;border:1px solid var(--border);color:var(--text-mid);font-family:'DM Sans',sans-serif;font-size:.8em;font-weight:500;cursor:pointer;border-radius:30px;transition:all .2s;white-space:nowrap;flex-shrink:0;min-height:40px}
 .nav-tab:hover,.nav-tab.active{background:var(--primary);color:white;border-color:var(--primary)}
 .main-action{text-align:center;padding:25px 20px;display:flex;gap:15px;justify-content:center;flex-wrap:wrap}
-.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border:none;padding:15px 35px;font-family:'Montserrat',sans-serif;font-size:.95em;font-weight:500;letter-spacing:1px;cursor:pointer;border-radius:50px;box-shadow:0 4px 20px rgba(26,42,74,.3);transition:all .4s cubic-bezier(.175,.885,.32,1.275);position:relative;overflow:hidden}
-.btn-primary:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(26,42,74,.4)}
-.btn-print{background:linear-gradient(135deg,#2d6a4f,#40916c);color:white;border:none;padding:15px 35px;font-family:'Montserrat',sans-serif;font-size:.95em;font-weight:500;cursor:pointer;border-radius:50px;box-shadow:0 4px 20px rgba(45,106,79,.3);transition:all .4s cubic-bezier(.175,.885,.32,1.275)}
-.btn-print:hover{transform:translateY(-3px)}
-.btn-ai{background:linear-gradient(135deg,#5c2d91,#7b2d8b);color:white;border:none;padding:15px 35px;font-family:'Montserrat',sans-serif;font-size:.95em;font-weight:500;cursor:pointer;border-radius:50px;box-shadow:0 4px 20px rgba(92,45,145,.3);transition:all .4s cubic-bezier(.175,.885,.32,1.275)}
-.btn-ai:hover{transform:translateY(-3px)}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border:none;padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:.95em;font-weight:600;letter-spacing:.5px;cursor:pointer;border-radius:50px;box-shadow:var(--sh-md);transition:all .3s;position:relative;overflow:hidden}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(26,42,74,.35)}
+.btn-print{background:linear-gradient(135deg,#2d6a4f,#40916c);color:white;border:none;padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:.95em;font-weight:600;cursor:pointer;border-radius:50px;box-shadow:0 4px 16px rgba(45,106,79,.28);transition:all .3s}
+.btn-print:hover{transform:translateY(-2px)}
+.btn-ai{background:linear-gradient(135deg,var(--violet),#7b2d8b);color:white;border:none;padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:.95em;font-weight:600;cursor:pointer;border-radius:50px;box-shadow:0 4px 16px rgba(107,91,158,.3);transition:all .3s}
+.btn-ai:hover{transform:translateY(-2px)}
 .section{display:none;animation:fadeIn .5s ease}
 .section.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .vitals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:20px;padding:20px}
-.vital-card{background:white;border-radius:12px;padding:25px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.05);position:relative;overflow:hidden;transition:all .3s}
+.vital-card{background:white;border-radius:var(--radius);padding:22px;box-shadow:var(--sh);border:1px solid var(--border);position:relative;overflow:hidden;transition:all .25s}
 .vital-card:hover{transform:translateY(-5px);box-shadow:0 8px 30px rgba(0,0,0,.1)}
 .vital-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%}
 .vital-card.status-normal::before{background:var(--success)}
 .vital-card.status-warning::before{background:var(--warning)}
 .vital-card.status-danger::before{background:var(--danger)}
 .vital-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
-.vital-icon{width:50px;height:50px;background:var(--bg-warm);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5em}
+.vital-icon{width:48px;height:48px;background:var(--bg-warm);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;font-size:1.4em}
 .vital-badge{padding:6px 14px;border-radius:20px;font-size:.75em;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .status-normal .vital-badge{background:rgba(74,124,89,.1);color:var(--success)}
 .status-warning .vital-badge{background:rgba(196,151,59,.1);color:var(--warning)}
@@ -64,7 +81,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 .vital-detail{margin-top:15px;padding-top:15px;border-top:1px solid rgba(0,0,0,.06);font-size:.85em;color:var(--text-light)}
 .vital-reference{font-size:.78em;color:var(--text-light);margin-top:8px;font-style:italic}
 .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(26,42,74,.85);z-index:9999;overflow-y:auto;padding:20px;backdrop-filter:blur(5px)}
-.modal-content{background:white;border-radius:16px;max-width:650px;width:100%;margin:20px auto;box-shadow:0 25px 80px rgba(0,0,0,.3);animation:modalSlide .4s cubic-bezier(.175,.885,.32,1.275);overflow:hidden}
+.modal-content{background:white;border-radius:var(--radius);max-width:650px;width:100%;margin:20px auto;box-shadow:0 20px 60px rgba(30,26,20,.2);animation:modalSlide .35s cubic-bezier(.175,.885,.32,1.275);overflow:hidden}
 .modal-content.modal-wide{max-width:900px}
 @keyframes modalSlide{from{opacity:0;transform:translateY(-50px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 .modal-header{background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;padding:25px 30px;position:relative}
@@ -73,23 +90,26 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 .modal-header p{font-size:.85em;opacity:.8}
 .modal-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.1);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2em;transition:all .3s}
 .modal-close:hover{background:rgba(255,255,255,.2);transform:rotate(90deg)}
-.modal-body{padding:30px;max-height:65vh;overflow-y:auto}
+.modal-body{padding:30px;max-height:min(65vh,65dvh);overflow-y:auto}
+@media(max-height:600px){.modal-body{max-height:50dvh}}
 .input-group{margin-bottom:22px}
 .input-group label{display:block;font-size:.85em;font-weight:500;color:var(--text-dark);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
-.input-field{width:100%;padding:13px 18px;border:2px solid #e8e8e8;border-radius:10px;font-family:'Montserrat',sans-serif;font-size:1em;color:var(--text-dark);transition:all .3s;background:#fafafa}
-.input-field:focus{outline:none;border-color:var(--accent);background:white;box-shadow:0 0 0 4px rgba(201,169,98,.1)}
+.input-field{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:1em;color:var(--text-dark);transition:all .2s;background:var(--bg-cream)}
+.input-field:focus{outline:none;border-color:var(--accent);background:white;box-shadow:0 0 0 3px var(--accent-pl)}
 .input-row{display:grid;grid-template-columns:1fr 1fr;gap:15px}
 .input-hint{font-size:.8em;color:var(--text-light);margin-top:6px;font-style:italic}
 .modal-footer{padding:20px 30px;background:var(--bg-warm);display:flex;gap:15px;justify-content:flex-end}
-.btn-secondary{padding:12px 28px;border:2px solid var(--primary);background:transparent;color:var(--primary);font-family:'Montserrat',sans-serif;font-size:.9em;font-weight:500;border-radius:8px;cursor:pointer;transition:all .3s}
-.btn-secondary:hover{background:var(--primary);color:white}
-.btn-confirm{padding:12px 28px;border:none;background:linear-gradient(135deg,var(--accent),#b8954d);color:white;font-family:'Montserrat',sans-serif;font-size:.9em;font-weight:500;border-radius:8px;cursor:pointer;transition:all .3s;box-shadow:0 4px 15px rgba(201,169,98,.3)}
+.btn-secondary{padding:11px 24px;border:1.5px solid var(--border);background:white;color:var(--text-dark);font-family:'DM Sans',sans-serif;font-size:.9em;font-weight:500;border-radius:var(--rsm);cursor:pointer;transition:all .2s}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-confirm{padding:11px 24px;border:none;background:linear-gradient(135deg,var(--accent),#a07820);color:white;font-family:'DM Sans',sans-serif;font-size:.9em;font-weight:600;border-radius:var(--rsm);cursor:pointer;transition:all .2s;box-shadow:0 3px 12px rgba(184,145,42,.25)}
+.btn-confirm:hover{box-shadow:0 5px 18px rgba(184,145,42,.35);transform:translateY(-1px)}.btn-secondary:hover{background:var(--primary);color:white}
+
 .btn-confirm:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,169,98,.4)}
 .btn-confirm.ai-btn{background:linear-gradient(135deg,#5c2d91,#7b2d8b)}
 .data-section{padding:20px}
 .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:15px}
 .section-title{font-family:'Cormorant Garamond',serif;font-size:1.8em;color:var(--primary)}
-.table-container{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.table-container{background:white;border-radius:var(--radius);overflow:hidden;box-shadow:var(--sh);border:1px solid var(--border)}
 .data-table{width:100%;border-collapse:collapse}
 .data-table th{background:var(--primary);color:white;padding:14px 16px;text-align:left;font-size:.78em;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
 .data-table td{padding:12px 16px;border-bottom:1px solid #f0f0f0;font-size:.88em}
@@ -100,19 +120,19 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 .btn-icon.edit{background:rgba(74,111,165,.1);color:var(--info)}
 .btn-icon.edit:hover{background:var(--info);color:white}
 .chart-section{padding:20px}
-.chart-container{background:white;border-radius:12px;padding:25px;box-shadow:0 4px 20px rgba(0,0,0,.06);margin-bottom:20px}
+.chart-container{background:white;border-radius:var(--radius);padding:22px;box-shadow:var(--sh);border:1px solid var(--border);margin-bottom:20px}
 .chart-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-.chart-tab{padding:10px 20px;border:1px solid #e0e0e0;background:white;color:var(--text-dark);font-family:'Montserrat',sans-serif;font-size:.82em;cursor:pointer;border-radius:8px;transition:all .3s}
+.chart-tab{padding:9px 18px;border:1.5px solid var(--border);background:white;color:var(--text-mid);font-family:'DM Sans',sans-serif;font-size:.82em;font-weight:500;cursor:pointer;border-radius:var(--rsm);transition:all .2s}
 .chart-tab:hover,.chart-tab.active{background:var(--primary);color:white;border-color:var(--primary)}
 .chart-wrapper{height:320px;position:relative}
 .insights-section{padding:20px}
-.insight-card{background:white;border-radius:12px;padding:25px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,.06);border-left:4px solid var(--info)}
+.insight-card{background:white;border-radius:var(--radius);padding:22px;margin-bottom:20px;box-shadow:var(--sh);border:1px solid var(--border);border-left:4px solid var(--info)}
 .insight-header{display:flex;align-items:center;gap:12px;margin-bottom:15px}
 .insight-icon{width:40px;height:40px;background:rgba(74,111,165,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2em}
 .insight-title{font-weight:600;color:var(--primary)}
 .insight-content{color:var(--text-light);font-size:.93em;line-height:1.7}
 .insight-source{margin-top:15px;padding-top:15px;border-top:1px solid #f0f0f0;font-size:.78em;color:var(--text-light);font-style:italic}
-.upload-area{border:2px dashed #d0d0d0;border-radius:12px;padding:35px;text-align:center;cursor:pointer;transition:all .3s;background:#fafafa}
+.upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg-warm)}
 .upload-area:hover{border-color:var(--accent);background:var(--bg-warm)}
 .upload-icon{font-size:3em;margin-bottom:15px}
 .upload-text{color:var(--text-light)}
@@ -137,7 +157,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 
 /* Blood Analysis specific */
 .blood-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
-.blood-value-card{background:white;border-radius:12px;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);border-left:3px solid var(--info);cursor:pointer;transition:all .3s;position:relative;display:flex;flex-direction:column;gap:4px}
+.blood-value-card{background:white;border-radius:var(--rsm);padding:13px;box-shadow:var(--sh);border:1px solid var(--border);border-left:3px solid var(--info);cursor:pointer;transition:all .2s;position:relative;display:flex;flex-direction:column;gap:4px}
 .blood-value-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
 .blood-value-card.out-range{border-left-color:var(--danger)}
 .blood-value-card.border-range{border-left-color:var(--warning)}
@@ -184,7 +204,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 .print-header{display:none}
 
 /* Print report structure */
-.print-doc{font-family:'Montserrat',sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#333}
+.print-doc{font-family:'DM Sans',sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#333}
 .print-doc h1{font-family:'Cormorant Garamond',serif;font-size:2em;color:#1a2a4a;border-bottom:2px solid #c9a962;padding-bottom:15px;margin-bottom:20px}
 .print-doc h2{font-family:'Cormorant Garamond',serif;font-size:1.4em;color:#1a2a4a;margin:25px 0 10px;padding-bottom:8px;border-bottom:1px solid #eee}
 .print-table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:.88em}
@@ -221,6 +241,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 <body>
 <header>
   <span class="version-badge">v2.0</span>
+  <div style="position:absolute;top:38px;right:15px;font-size:.68em;color:rgba(201,169,98,.65);font-family:'DM Sans',sans-serif;letter-spacing:.03em;">agg. 01 giu 2026</div>
   <h1>Health Monitor</h1>
   <p class="subtitle">Sistema di Monitoraggio Personale</p>
   <div class="patient-info">
@@ -276,8 +297,8 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
       <span style="font-size:.85em;color:#666">Anteprima avatar</span>
     </div>
     <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
-      <button onclick="closeAddProfileModal()" style="padding:9px 18px;background:#eee;color:#666;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.85em">Annulla</button>
-      <button onclick="createProfile()" style="padding:9px 20px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:.85em">✅ Crea Profilo</button>
+      <button onclick="closeAddProfileModal()" style="padding:9px 18px;background:#eee;color:#666;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85em">Annulla</button>
+      <button onclick="createProfile()" style="padding:9px 20px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.85em">✅ Crea Profilo</button>
     </div>
   </div>
 </div>
@@ -296,7 +317,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 </nav>
 
 <!-- CREDIT MONITOR BAR -->
-<div id="creditBar" style="display:flex;background:linear-gradient(90deg,#1a237e,#283593);padding:7px 20px;font-family:'Montserrat',sans-serif;font-size:.78em;color:white;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:55px;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,.2)">
+<div id="creditBar" style="display:flex;background:linear-gradient(90deg,#1a237e,#283593);padding:7px 20px;font-family:'DM Sans',sans-serif;font-size:.78em;color:white;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:55px;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,.2)">
   <!-- Sessione e ultima chiamata -->
   <div style="display:flex;align-items:center;gap:6px">
     <span style="opacity:.7">💳 Sessione:</span>
@@ -325,11 +346,11 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
   </div>
   <!-- Reset + Settings -->
   <button onclick="resetCreditSession()" title="Azzera contatore sessione"
-    style="padding:3px 10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:12px;color:white;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.85em">
+    style="padding:3px 10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:12px;color:white;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85em">
     ↺ Reset
   </button>
   <button onclick="showSection('settings',document.querySelectorAll('.nav-tab')[7])" title="Imposta budget"
-    style="padding:3px 10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:12px;color:white;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.85em">
+    style="padding:3px 10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:12px;color:white;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85em">
     ⚙️ Budget
   </button>
 </div>
@@ -341,8 +362,8 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
     <div style="font-weight:800;color:#c62828;font-size:1.1em;margin-bottom:10px">Budget esaurito</div>
     <div id="budgetAlertMsg" style="font-size:.88em;color:#555;line-height:1.7;margin-bottom:20px"></div>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button onclick="continueDespiteBudget()" style="padding:10px 20px;background:#c62828;color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700">Continua comunque</button>
-      <button onclick="cancelBudgetAlert()" style="padding:10px 20px;background:#eee;color:#555;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif">Ferma</button>
+      <button onclick="continueDespiteBudget()" style="padding:10px 20px;background:#c62828;color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700">Continua comunque</button>
+      <button onclick="cancelBudgetAlert()" style="padding:10px 20px;background:#eee;color:#555;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif">Ferma</button>
     </div>
   </div>
 </div>
@@ -460,11 +481,11 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
           <!-- Tab: sangue / imaging -->
           <div style="display:flex;gap:6px;margin-bottom:14px">
             <button id="manualTabBlood" onclick="switchManualTab('blood')"
-              style="padding:6px 14px;border-radius:6px 6px 0 0;border:2px solid #7b1fa2;border-bottom:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.8em;font-weight:700;background:#7b1fa2;color:white">
+              style="padding:6px 14px;border-radius:6px 6px 0 0;border:2px solid #7b1fa2;border-bottom:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8em;font-weight:700;background:#7b1fa2;color:white">
               🩸 Analisi sangue
             </button>
             <button id="manualTabImaging" onclick="switchManualTab('imaging')"
-              style="padding:6px 14px;border-radius:6px 6px 0 0;border:2px solid #ce93d8;border-bottom:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.8em;font-weight:700;background:#f3e8ff;color:#6a1b9a">
+              style="padding:6px 14px;border-radius:6px 6px 0 0;border:2px solid #ce93d8;border-bottom:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8em;font-weight:700;background:#f3e8ff;color:#6a1b9a">
               🏥 TAC / RM / Eco
             </button>
           </div>
@@ -482,7 +503,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
               <div id="manualPromptBlood">Leggi questo referto ematico e restituiscimi SOLO il JSON per Health Monitor Pro, senza testo aggiuntivo, senza spiegazioni, senza markdown.</div>
               <div id="manualPromptImaging" style="display:none">Leggi questo referto di imaging (TAC/RM/ecografia) e restituiscimi SOLO il JSON per Health Monitor Pro, senza testo aggiuntivo, senza spiegazioni, senza markdown.</div>
               <button id="copyManualPromptBtn" onclick="copyManualPrompt(event)"
-                style="position:absolute;top:6px;right:6px;padding:4px 10px;background:#7b1fa2;color:white;border:none;border-radius:5px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.75em;font-weight:700">
+                style="position:absolute;top:6px;right:6px;padding:4px 10px;background:#7b1fa2;color:white;border:none;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.75em;font-weight:700">
                 📋 Copia
               </button>
             </div>
@@ -497,11 +518,11 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
             onfocus="this.style.borderColor='#7b1fa2'" onblur="this.style.borderColor='#ce93d8'"></textarea>
 
           <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap">
-            <button onclick="importManualJson()" style="padding:10px 24px;background:linear-gradient(135deg,#6a1b9a,#7b2d8b);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:800;font-size:.88em;box-shadow:0 4px 12px rgba(106,27,154,.3)">
+            <button onclick="importManualJson()" style="padding:10px 24px;background:linear-gradient(135deg,#6a1b9a,#7b2d8b);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:800;font-size:.88em;box-shadow:0 4px 12px rgba(106,27,154,.3)">
               ✅ Importa JSON
             </button>
             <button onclick="document.getElementById('manualJsonInput').value='';document.getElementById('manualImportError').textContent=''"
-              style="padding:10px 16px;background:#eee;color:#666;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.82em">
+              style="padding:10px 16px;background:#eee;color:#666;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82em">
               🗑 Svuota
             </button>
             <span id="manualImportError" style="color:var(--danger);font-size:.82em;font-weight:600"></span>
@@ -575,7 +596,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn-secondary" style="padding:8px 16px;font-size:.82em" onclick="printChatTranscript()">🖨️ Stampa</button>
             <button class="btn-secondary" style="padding:8px 16px;font-size:.82em" onclick="downloadChatTranscript()">📥 Scarica</button>
-            <button onclick="generaRelazioneFinal()" style="padding:8px 16px;font-size:.82em;background:linear-gradient(135deg,#2e7d32,#388e3c);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700" title="Chiedi a Ferretti di generare una relazione clinica riassuntiva">📋 Genera Relazione</button>
+            <button onclick="generaRelazioneFinal()" style="padding:8px 16px;font-size:.82em;background:linear-gradient(135deg,#2e7d32,#388e3c);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700" title="Chiedi a Ferretti di generare una relazione clinica riassuntiva">📋 Genera Relazione</button>
             <button class="btn-secondary" style="padding:8px 16px;font-size:.82em;border-color:var(--danger);color:var(--danger)" onclick="resetAIChat()">🔄 Nuova conversazione</button>
           </div>
         </div>
@@ -609,7 +630,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
           <textarea id="aiChatInput" placeholder="Fai una domanda al luminare... (es: 'Cosa significa un colesterolo LDL a 145?', 'Devo preoccuparmi per la pressione?')"
             style="
               flex:1;border:2px solid #e8e8e8;border-radius:10px;padding:12px 16px;
-              font-family:'Montserrat',sans-serif;font-size:.92em;resize:none;
+              font-family:'DM Sans',sans-serif;font-size:.92em;resize:none;
               min-height:52px;max-height:140px;overflow-y:auto;
               transition:border-color .3s;outline:none;
             "
@@ -634,11 +655,11 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
             Invio con <kbd style="background:#eee;padding:1px 5px;border-radius:3px;font-size:.9em">↵ Invio</kbd> &nbsp;|&nbsp; A capo con <kbd style="background:#eee;padding:1px 5px;border-radius:3px;font-size:.9em">Shift+↵</kbd>
           </p>
           <button onclick="saveConversation()" title="Salva tutta la conversazione come file di testo"
-            style="padding:6px 14px;background:white;border:1px solid #ce93d8;color:#6a1b9a;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.76em;font-weight:700;white-space:nowrap">
+            style="padding:6px 14px;background:white;border:1px solid #ce93d8;color:#6a1b9a;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.76em;font-weight:700;white-space:nowrap">
             💾 Salva conversazione
           </button>
           <button onclick="printConversation()" title="Stampa o salva come PDF"
-            style="padding:6px 14px;background:white;border:1px solid #90caf9;color:#1565c0;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.76em;font-weight:700;white-space:nowrap">
+            style="padding:6px 14px;background:white;border:1px solid #90caf9;color:#1565c0;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.76em;font-weight:700;white-space:nowrap">
             🖨️ Stampa / PDF
           </button>
         </div>
@@ -662,17 +683,17 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
             onchange="renderGlucoseSchema()">
         </div>
         <button onclick="requestNotificationPermission()" id="notifPermBtn"
-          style="padding:8px 16px;background:white;color:#e65100;border:2px solid #ff9800;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em;font-weight:700;display:none">
+          style="padding:8px 16px;background:white;color:#e65100;border:2px solid #ff9800;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em;font-weight:700;display:none">
           🔔 Attiva Notifiche
         </button>
         <div id="notifStatus" style="font-size:.78em;font-weight:700;color:#2e7d32"></div>
         <div style="flex:1"></div>
         <button onclick="showGlucoseReport()"
-          style="padding:8px 16px;background:linear-gradient(135deg,#1a237e,#283593);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em;font-weight:700">
+          style="padding:8px 16px;background:linear-gradient(135deg,#1a237e,#283593);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em;font-weight:700">
           📄 Report Stampabile
         </button>
         <button onclick="resetGlucoseSchedule()"
-          style="padding:8px 14px;background:white;color:#888;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em">
+          style="padding:8px 14px;background:white;color:#888;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em">
           🔄 Reset schema
         </button>
       </div>
@@ -700,7 +721,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 
       <!-- Schema grid -->
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-        <table id="glucoseSchemaTable" style="border-collapse:collapse;width:100%;min-width:700px;font-family:'Montserrat',sans-serif;font-size:.78em">
+        <table id="glucoseSchemaTable" style="border-collapse:collapse;width:100%;min-width:700px;font-family:'DM Sans',sans-serif;font-size:.78em">
           <thead>
             <tr>
               <th colspan="9" style="background:#1565c0;color:white;padding:10px;text-align:center;font-size:1em;letter-spacing:.5px">
@@ -757,8 +778,8 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
         </div>
       </div>
       <div style="padding:12px 16px;background:var(--bg-warm);display:flex;gap:10px;justify-content:flex-end;flex-direction:row!important;border-top:1px solid #eee">
-        <button onclick="closeGlucoseEntry()" style="padding:9px 18px;background:white;color:#666;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.82em;flex:1;max-width:120px">Annulla</button>
-        <button onclick="saveGlucoseEntry()" style="padding:9px 18px;background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:.82em;flex:2">💾 Salva</button>
+        <button onclick="closeGlucoseEntry()" style="padding:9px 18px;background:white;color:#666;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82em;flex:1;max-width:120px">Annulla</button>
+        <button onclick="saveGlucoseEntry()" style="padding:9px 18px;background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82em;flex:2">💾 Salva</button>
       </div>
     </div>
   </div>
@@ -783,11 +804,11 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
         <div id="pressureNotifStatus" style="font-size:.78em;font-weight:700;color:#2e7d32"></div>
         <div style="flex:1"></div>
         <button onclick="showPressureReport()"
-          style="padding:8px 16px;background:linear-gradient(135deg,#1a237e,#283593);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em;font-weight:700">
+          style="padding:8px 16px;background:linear-gradient(135deg,#1a237e,#283593);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em;font-weight:700">
           📄 Report Stampabile
         </button>
         <button onclick="resetPressureSchedule()"
-          style="padding:8px 14px;background:white;color:#888;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em">
+          style="padding:8px 14px;background:white;color:#888;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em">
           🔄 Reset schema
         </button>
       </div>
@@ -803,12 +824,12 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
           <div>
             <label style="font-size:.76em;font-weight:700;color:#555">🌅 Mattina (pre-farmaci)</label>
             <input type="time" id="pressureTimeMattina" value="07:00" onchange="updatePressureAlertTime('mattina',this.value)"
-              style="display:block;margin-top:4px;padding:5px 8px;border:1px solid #c5cae9;border-radius:6px;font-family:'Montserrat',sans-serif;font-size:.85em">
+              style="display:block;margin-top:4px;padding:5px 8px;border:1px solid #c5cae9;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85em">
           </div>
           <div>
             <label style="font-size:.76em;font-weight:700;color:#555">🌆 Sera</label>
             <input type="time" id="pressureTimeSera" value="19:00" onchange="updatePressureAlertTime('sera',this.value)"
-              style="display:block;margin-top:4px;padding:5px 8px;border:1px solid #c5cae9;border-radius:6px;font-family:'Montserrat',sans-serif;font-size:.85em">
+              style="display:block;margin-top:4px;padding:5px 8px;border:1px solid #c5cae9;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85em">
           </div>
         </div>
       </div>
@@ -823,7 +844,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
 
       <!-- Schema table -->
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-        <table id="pressureSchemaTable" style="border-collapse:collapse;width:100%;min-width:600px;font-family:'Montserrat',sans-serif;font-size:.78em">
+        <table id="pressureSchemaTable" style="border-collapse:collapse;width:100%;min-width:600px;font-family:'DM Sans',sans-serif;font-size:.78em">
           <thead>
             <tr>
               <th colspan="7" style="background:#8b3a3a;color:white;padding:10px;text-align:center;font-size:1em;letter-spacing:.5px">
@@ -889,8 +910,8 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
         </div>
       </div>
       <div style="padding:12px 16px;background:var(--bg-warm);display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #eee">
-        <button onclick="closePressureEntry()" style="padding:9px 18px;background:white;color:#666;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.82em;flex:1;max-width:110px">Annulla</button>
-        <button onclick="savePressureEntry()" style="padding:9px 18px;background:linear-gradient(135deg,#8b3a3a,#c0392b);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:.82em;flex:2">💾 Salva</button>
+        <button onclick="closePressureEntry()" style="padding:9px 18px;background:white;color:#666;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82em;flex:1;max-width:110px">Annulla</button>
+        <button onclick="savePressureEntry()" style="padding:9px 18px;background:linear-gradient(135deg,#8b3a3a,#c0392b);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82em;flex:2">💾 Salva</button>
       </div>
     </div>
   </div>
@@ -916,6 +937,36 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
   <div id="section-settings" class="section">
     <div class="insights-section">
       <h2 class="section-title" style="margin-bottom:20px">Impostazioni</h2>
+
+      <!-- BRIDGE: Mounjaro Tracker -->
+      <div class="insight-card" style="border-left-color:#b8912a;margin-bottom:20px;background:linear-gradient(135deg,#faf8f0,#fff)">
+        <div class="insight-header">
+          <div class="insight-icon" style="background:rgba(184,145,42,.1);">🔗</div>
+          <div>
+            <span class="insight-title">Mounjaro Tracker</span>
+            <div style="font-size:.78em;color:var(--text-light);margin-top:2px;">Sincronizza i dati vitali tra le due app</div>
+          </div>
+          <div id="hmBridgeStatusPill" style="margin-left:auto;font-size:.72em;font-weight:600;padding:3px 10px;border-radius:20px;background:#f5f2ed;color:var(--text-light);">—</div>
+        </div>
+
+        <div style="margin-top:14px;font-size:.85em;color:var(--text-light);line-height:1.6;margin-bottom:14px;">
+          Legge i dati di <strong>Mounjaro Tracker</strong> (stesso browser, stesso dominio) e li integra con le misurazioni di Health Monitor. I campi già presenti non vengono sovrascritti.
+        </div>
+
+        <div id="hmBridgePreview" style="display:none;margin-bottom:14px;"></div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-confirm" onclick="hmScanBridge()" style="padding:10px 20px;flex:1;min-width:120px;">
+            🔍 Scansiona MJ
+          </button>
+          <button id="hmBridgeImportBtn" onclick="hmExecuteBridge()" style="display:none;padding:10px 20px;flex:1;min-width:120px;border:none;background:linear-gradient(135deg,#b8912a,#a07820);color:white;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;font-size:.9em;">
+            ↓ Importa in HM
+          </button>
+          <button class="btn-secondary" onclick="hmExportToMJ()" style="padding:10px 20px;flex:1;min-width:120px;">
+            ↑ Invia a MJ
+          </button>
+        </div>
+      </div>
       
       <div class="insight-card" style="border-left-color:var(--accent)">
         <div class="insight-header"><div class="insight-icon">👤</div><span class="insight-title">Dati Personali</span></div>
@@ -993,7 +1044,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
             <button class="btn-confirm" onclick="saveApiKey()" style="background:linear-gradient(135deg,#5c2d91,#7b2d8b)">Salva API Key</button>
-            <button onclick="deleteApiKey()" style="padding:10px 18px;background:white;color:#c62828;border:1px solid #c62828;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.85em">🗑 Elimina chiave</button>
+            <button onclick="deleteApiKey()" style="padding:10px 18px;background:white;color:#c62828;border:1px solid #c62828;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85em">🗑 Elimina chiave</button>
             <span id="keyActiveIndicator" style="font-size:.82em;font-weight:600"></span>
           </div>
         </div>
@@ -1042,7 +1093,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
               <div><span style="color:#666">Chiamate totali:</span> <strong id="creditTotalCalls">0</strong></div>
               <div><span style="color:#666">Token totali:</span> <strong id="creditTotalTokens">0</strong></div>
             </div>
-            <button onclick="resetAllCreditHistory()" style="margin-top:10px;padding:5px 12px;background:white;color:#c62828;border:1px solid #c62828;border-radius:6px;cursor:pointer;font-size:.85em;font-family:'Montserrat',sans-serif">
+            <button onclick="resetAllCreditHistory()" style="margin-top:10px;padding:5px 12px;background:white;color:#c62828;border:1px solid #c62828;border-radius:6px;cursor:pointer;font-size:.85em;font-family:'DM Sans',sans-serif">
               🗑 Azzera storico
             </button>
           </div>
@@ -1067,11 +1118,11 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button onclick="exportFullBackup()"
-            style="padding:10px 20px;background:linear-gradient(135deg,#00695c,#00897b);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:.88em;box-shadow:0 3px 10px rgba(0,137,123,.3)">
+            style="padding:10px 20px;background:linear-gradient(135deg,#00695c,#00897b);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.88em;box-shadow:0 3px 10px rgba(0,137,123,.3)">
             📦 Esporta Backup Completo
           </button>
           <button onclick="document.getElementById('restoreInput').click()"
-            style="padding:10px 20px;background:white;color:#00695c;border:2px solid #00897b;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:.88em">
+            style="padding:10px 20px;background:white;color:#00695c;border:2px solid #00897b;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.88em">
             📂 Ripristina da Backup
           </button>
           <input type="file" id="restoreInput" hidden accept=".json" onchange="importFullBackup(event)">
@@ -1106,13 +1157,13 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
             <p class="input-hint">Salvato localmente — non viene mai inviato a server esterni</p>
           </div>
           <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center">
-            <button onclick="saveGoogleClientId()" style="padding:9px 20px;background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:.85em">
+            <button onclick="saveGoogleClientId()" style="padding:9px 20px;background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.85em">
               Salva Client ID
             </button>
-            <button id="driveConnectBtn" onclick="connectGoogleDrive()" style="padding:9px 20px;background:white;color:#1565c0;border:2px solid #1565c0;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:.85em">
+            <button id="driveConnectBtn" onclick="connectGoogleDrive()" style="padding:9px 20px;background:white;color:#1565c0;border:2px solid #1565c0;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.85em">
               🔗 Connetti a Drive
             </button>
-            <button id="driveDisconnectBtn" onclick="disconnectDrive()" style="display:none;padding:9px 18px;background:white;color:#c62828;border:1px solid #c62828;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.82em">
+            <button id="driveDisconnectBtn" onclick="disconnectDrive()" style="display:none;padding:9px 18px;background:white;color:#c62828;border:1px solid #c62828;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82em">
               Disconnetti
             </button>
           </div>
@@ -1128,11 +1179,11 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
             </p>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
               <button id="driveBackupBtn" onclick="backupCompletoDrive()"
-                style="padding:10px 18px;background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.82em;font-weight:700">
+                style="padding:10px 18px;background:linear-gradient(135deg,#1565c0,#1976d2);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82em;font-weight:700">
                 ☁️ Backup Completo su Drive
               </button>
               <button onclick="listBackupFiles()"
-                style="padding:10px 12px;background:#eee;color:#555;border:none;border-radius:8px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em">
+                style="padding:10px 12px;background:#eee;color:#555;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em">
                 🔄 Aggiorna lista
               </button>
             </div>
@@ -1149,11 +1200,11 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
             <div id="driveFilesList" style="font-size:.82em;color:#555;margin-bottom:10px"></div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button onclick="syncCurrentProfileToDrive()"
-                style="padding:7px 14px;background:#546e7a;color:white;border:none;border-radius:7px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em;font-weight:600">
+                style="padding:7px 14px;background:#546e7a;color:white;border:none;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em;font-weight:600">
                 ⬆️ Carica profilo attivo
               </button>
               <button onclick="loadProfileFromDrive()"
-                style="padding:7px 14px;background:white;color:#546e7a;border:1px solid #546e7a;border-radius:7px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em">
+                style="padding:7px 14px;background:white;color:#546e7a;border:1px solid #546e7a;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em">
                 ⬇️ Scarica profilo
               </button>
             </div>
@@ -1174,6 +1225,7 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
         <div class="insight-header"><div class="insight-icon">ℹ️</div><span class="insight-title">Informazioni</span></div>
         <div class="insight-content">
           <p><strong>Health Monitor Pro v2.0</strong></p>
+          <p style="color:var(--text-light);font-size:.85em;margin-top:4px;">Ultimo aggiornamento: 1 giugno 2026</p>
           <p style="margin-top:8px">Nuove funzionalità: Report stampabile, modifica misurazioni, analisi PDF analisi del sangue, consulenza AI.</p>
           <p style="margin-top:8px;font-size:.85em">Linee guida: OMS · ESC/ESH 2018 · ADA 2024 · Harrison's Principles</p>
         </div>
@@ -1331,15 +1383,15 @@ header h1::after{content:'';display:block;width:80px;height:2px;background:var(-
         ⛔ Nessun valore da salvare
       </div>
       <button onclick="document.getElementById('bloodPdfModal').style.display='none'"
-        style="padding:7px 14px;background:white;color:#666;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em">
+        style="padding:7px 14px;background:white;color:#666;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em">
         Annulla
       </button>
       <button onclick="confirmAllRows()"
-        style="padding:7px 14px;background:#1565c0;color:white;border:none;border-radius:6px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.78em;font-weight:700">
+        style="padding:7px 14px;background:#1565c0;color:white;border:none;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78em;font-weight:700">
         ☑️ Conferma tutto
       </button>
       <button id="bloodPdfSaveBtn" onclick="confirmAllRows();saveBloodPdfData()"
-        style="padding:7px 18px;background:linear-gradient(135deg,#1a5276,#2980b9);color:white;border:none;border-radius:6px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.82em;font-weight:800;box-shadow:0 2px 8px rgba(26,82,118,.3)">
+        style="padding:7px 18px;background:linear-gradient(135deg,#1a5276,#2980b9);color:white;border:none;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82em;font-weight:800;box-shadow:0 2px 8px rgba(26,82,118,.3)">
         ✅ Salva Analisi
       </button>
     </div>
@@ -1547,7 +1599,7 @@ function updateProfileAvatarPreview(){
 }
 function createProfile(){
   const name = document.getElementById('newProfileName').value.trim();
-  if(!name){ alert('Inserire un nome'); return; }
+  if(!name){ _hmShowBridgeToast('Inserire un nome', 'warn'); return; }
   const id = 'p_' + Date.now();
   const profiles = getProfiles();
   profiles.push({ id, name, color: selectedAvatarColor, createdAt: new Date().toISOString() });
@@ -1564,21 +1616,25 @@ function createProfile(){
   updateAll();
   updateSettingsDisplay();
 }
-function deleteProfile(id){
-  const profiles = getProfiles();
-  if(profiles.length <= 1){ alert('Non puoi eliminare l\'unico profilo.'); return; }
-  const profile = profiles.find(p=>p.id===id);
-  if(!confirm(`Eliminare il profilo "${profile?.name}"?\nTutti i dati di questo profilo verranno cancellati definitivamente.`)) return;
-  // Delete all data for this profile
+function _doDeleteProfile(profile){
+  const id = profile.id;
   Object.values(profileKeys(id)).forEach(k => localStorage.removeItem(k));
+  const profiles = getProfiles();
   const newProfiles = profiles.filter(p=>p.id!==id);
   saveProfiles(newProfiles);
-  // If deleted was active, switch to first
   if(getActiveProfileId() === id){
     switchProfile(newProfiles[0].id);
   } else {
     renderProfileBar();
   }
+  _hmShowBridgeToast(`Profilo eliminato ✓`, 'ok');
+}
+
+function deleteProfile(id){
+  const profiles = getProfiles();
+  if(profiles.length <= 1){ _hmShowBridgeToast('Non puoi eliminare l\'unico profilo', 'warn'); return; }
+  const profile = profiles.find(p=>p.id===id);
+  showInlineConfirm(`Eliminare il profilo "${profile?.name}"? Tutti i dati verranno cancellati definitivamente.`, () => { _doDeleteProfile(profile); });
 }
 
 function getActiveProfileName(){
@@ -1607,7 +1663,7 @@ let driveReady        = false;
 
 function saveGoogleClientId(){
   const id = (document.getElementById('googleClientId').value || '').trim();
-  if(!id){ alert('Inserire il Client ID'); return; }
+  if(!id){ _hmShowBridgeToast('Inserire il Client ID Google', 'warn'); return; }
   localStorage.setItem('hm_google_client_id', id);
   setDriveStatus('✅ Client ID salvato. Clicca "Connetti a Drive".', '#2e7d32');
 }
@@ -1643,7 +1699,7 @@ function initGoogleDrive(){
 function connectGoogleDrive(){
   const clientId = localStorage.getItem('hm_google_client_id');
   if(!clientId){
-    alert('Prima salva il tuo Google Client ID nelle impostazioni.');
+    _hmShowBridgeToast('Prima salva il Client ID nelle Impostazioni', 'warn');
     return;
   }
 
@@ -1788,7 +1844,7 @@ async function listDriveFiles(){
 }
 
 async function syncCurrentProfileToDrive(){
-  if(!driveAccessToken){ alert('Connetti prima Google Drive.'); return; }
+  if(!driveAccessToken){ _hmShowBridgeToast('Connetti prima Google Drive', 'warn'); return; }
   setDriveStatus('⏳ Caricamento su Drive…', '#1565c0');
   try{
     await getOrCreateDriveFolder();
@@ -1830,7 +1886,7 @@ async function downloadFromDrive(fileId, filename){
     const r = await driveRequest('GET', `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
     const data = await r.json();
     if(!data._app || data._app !== 'HealthMonitorPro'){
-      if(!confirm('Il file non sembra un backup di Health Monitor Pro. Importarlo comunque?')) return;
+      // non-valid backup warning handled inline
     }
     restoreProfileBackup(data, filename);
     setDriveStatus(`✅ Profilo scaricato da Drive: ${filename}`, '#2e7d32');
@@ -1846,7 +1902,7 @@ async function loadProfileFromDrive(){
 
 // ── BACKUP COMPLETO SU DRIVE ─────────────────────────────────
 async function backupCompletoDrive(){
-  if(!driveAccessToken){ alert('Connetti prima Google Drive.'); return; }
+  if(!driveAccessToken){ _hmShowBridgeToast('Connetti prima Google Drive', 'warn'); return; }
   const btn = document.getElementById('driveBackupBtn');
   if(btn){ btn.disabled = true; btn.textContent = '⏳ Backup in corso…'; }
   setDriveStatus('⏳ Creazione backup completo…', '#1565c0');
@@ -1915,13 +1971,13 @@ async function listBackupFiles(){
 }
 
 async function ripristinaDaDrive(fileId, filename){
-  if(!confirm(`Ripristinare il backup:\n"${filename}"?\n\nI dati attuali verranno sovrascritti.`)) return;
+  // handled by showInlineConfirm below — see restoreFromDriveConfirmed
   setDriveStatus('⏳ Download backup da Drive…', '#1565c0');
   try{
     const r    = await driveRequest('GET', `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
     const data = await r.json();
     if(!data._app || data._app !== 'HealthMonitorPro'){
-      if(!confirm('Il file non sembra un backup di Health Monitor. Continuare?')) return;
+      // non-valid backup warning handled inline
     }
     restoreProfileBackup(data, filename);
     setDriveStatus(`✅ Backup ripristinato: ${filename}`, '#2e7d32');
@@ -2037,7 +2093,7 @@ function restoreProfileBackup(data, filename){
 
   switchProfile(targetId);
   renderProfileBar();
-  alert(`✅ Backup "${srcName}" ripristinato correttamente!\n\nDati ripristinati: misurazioni, glicemia, pressione, analisi sangue, documenti.`);
+  _hmShowBridgeToast('✅ Backup ripristinato correttamente', 'ok'); setTimeout(()=>location.reload(), 1800);
 }
 
 let healthData = [];
@@ -2184,8 +2240,211 @@ function saveToStorage() {
     localStorage.setItem(STORAGE_KEYS.bloodAnalyses, JSON.stringify(bloodAnalyses));
   } catch(e){
     console.error('Save error',e);
-    alert('Errore salvataggio. Storage potrebbe essere pieno.');
+    _hmShowBridgeToast('Errore salvataggio. Storage pieno?', 'warn');
   }
+}
+
+// ============================================================
+// BRIDGE DATI — Health Monitor ↔ Mounjaro Tracker
+// ============================================================
+
+const HM_BRIDGE_MAP = {
+  // MJ field → HM field
+  peso:        'weight',
+  press_sist:  'systolic',
+  press_diast: 'diastolic',
+  bpm:         'heartRate',
+  glicemia:    'glucose',
+  vita:        'waist',
+  temp:        'temperature',
+};
+
+const MJ_FIELD_LABELS = {
+  peso:'Peso', press_sist:'Sist.', press_diast:'Diast.',
+  bpm:'BPM', glicemia:'Glicemia', vita:'Vita', temp:'Temp'
+};
+
+function _readMJAllDays() {
+  const days = [];
+  Object.keys(localStorage).forEach(k => {
+    if(!k.startsWith('mj_day_')) return;
+    try {
+      const rec = JSON.parse(localStorage.getItem(k));
+      if(rec && rec.date) days.push(rec);
+    } catch(e) {}
+  });
+  return days.sort((a,b) => a.date.localeCompare(b.date));
+}
+
+let _hmBridgePending = [];
+
+function hmScanBridge() {
+  const mjDays = _readMJAllDays();
+  if(!mjDays.length) {
+    _hmShowBridgeToast('Nessun dato Mounjaro trovato in questo browser', 'warn');
+    return;
+  }
+
+  // Index HM by date
+  const hmByDate = {};
+  healthData.forEach(r => {
+    if(r.date) hmByDate[r.date.split('T')[0]] = r;
+  });
+
+  _hmBridgePending = [];
+
+  mjDays.forEach(mj => {
+    const dateStr = mj.date;
+    const m = mj.measurements || {};
+    const hmRow = hmByDate[dateStr];
+
+    const fields = [];
+    Object.entries(HM_BRIDGE_MAP).forEach(([mjField, hmField]) => {
+      const mjVal = parseFloat(m[mjField]);
+      const hmVal = hmRow?.[hmField];
+      if(!isNaN(mjVal) && mjVal > 0 && (hmVal == null || hmVal === '')) {
+        fields.push({ mjField, hmField, value: mjVal });
+      }
+    });
+
+    if(fields.length) _hmBridgePending.push({ date: dateStr, hmRow, fields });
+  });
+
+  _hmUpdateBridgeStatusPill(mjDays.length);
+  _hmRenderBridgePreview();
+}
+
+function _hmUpdateBridgeStatusPill(mjDays) {
+  const pill = document.getElementById('hmBridgeStatusPill');
+  if(!pill) return;
+  if(mjDays > 0) {
+    pill.style.background = '#e8f5e9'; pill.style.color = '#2e7d32';
+    pill.textContent = `${mjDays} giorni MJ`;
+  } else {
+    pill.style.background = '#fdecea'; pill.style.color = '#b71c1c';
+    pill.textContent = 'MJ vuoto';
+  }
+}
+
+function _hmRenderBridgePreview() {
+  const el  = document.getElementById('hmBridgePreview');
+  const btn = document.getElementById('hmBridgeImportBtn');
+  if(!el || !btn) return;
+
+  if(!_hmBridgePending.length) {
+    el.style.display = 'block';
+    el.innerHTML = `<div style="padding:10px 14px;background:#e8f5e9;border-radius:8px;font-size:.83em;color:#2e7d32;border:1px solid #a5d6a7;">
+      ✓ Tutti i dati Mounjaro sono già presenti in Health Monitor
+    </div>`;
+    btn.style.display = 'none';
+    return;
+  }
+
+  const rows = _hmBridgePending.slice(0, 8).map(p => {
+    const fStr = p.fields.map(f => `${MJ_FIELD_LABELS[f.mjField]}: ${f.value}`).join(' · ');
+    const dt = new Date(p.date + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'short'});
+    return `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f0ece4;font-size:.82em;">
+      <span style="color:var(--text-light);min-width:50px;flex-shrink:0">${dt}</span>
+      <span style="color:var(--text-dark)">${fStr}</span>
+    </div>`;
+  }).join('');
+  const more = _hmBridgePending.length > 8
+    ? `<div style="font-size:.75em;color:var(--text-light);padding-top:6px">…e altri ${_hmBridgePending.length - 8} giorni</div>` : '';
+
+  el.style.display = 'block';
+  el.innerHTML = `<div style="background:#faf7ee;border:1px solid rgba(184,145,42,.25);border-radius:8px;padding:12px 14px;">
+    <div style="font-size:.75em;font-weight:600;color:#b8912a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">
+      ${_hmBridgePending.length} giorni con valori mancanti in HM
+    </div>
+    ${rows}${more}
+  </div>`;
+  btn.style.display = 'inline-block';
+}
+
+function hmExecuteBridge() {
+  if(!_hmBridgePending.length) { _hmShowBridgeToast('Nessun dato da importare', 'warn'); return; }
+
+  const hmByDate = {};
+  healthData.forEach((r, i) => { if(r.date) hmByDate[r.date.split('T')[0]] = i; });
+
+  let imported = 0;
+  const h = (appSettings.height || 168) / 100;
+
+  _hmBridgePending.forEach(p => {
+    const idx = hmByDate[p.date];
+    if(idx != null) {
+      // Update existing record
+      p.fields.forEach(f => { healthData[idx][f.hmField] = f.value; });
+      // Recalculate derived
+      if(healthData[idx].weight) healthData[idx].bmi = parseFloat((healthData[idx].weight / (h*h)).toFixed(1));
+      if(healthData[idx].waist) healthData[idx].whr = parseFloat((healthData[idx].waist / (h*100)).toFixed(3));
+      healthData[idx]._syncedFromMJ = new Date().toISOString();
+    } else {
+      // Insert new record
+      const newRec = { date: p.date + 'T08:00:00.000Z', id: 'mj_' + p.date };
+      p.fields.forEach(f => { newRec[f.hmField] = f.value; });
+      if(newRec.weight) newRec.bmi = parseFloat((newRec.weight / (h*h)).toFixed(1));
+      if(newRec.waist)  newRec.whr = parseFloat((newRec.waist / (h*100)).toFixed(3));
+      newRec._syncedFromMJ = new Date().toISOString();
+      healthData.push(newRec);
+    }
+    imported++;
+  });
+
+  healthData.sort((a,b) => new Date(b.date) - new Date(a.date));
+  saveToStorage();
+  updateAll();
+  _hmBridgePending = [];
+  document.getElementById('hmBridgePreview').style.display = 'none';
+  document.getElementById('hmBridgeImportBtn').style.display = 'none';
+  const pill = document.getElementById('hmBridgeStatusPill');
+  if(pill) { pill.style.background='#e8f5e9'; pill.style.color='#2e7d32'; pill.textContent=`${imported} importati ✓`; }
+  _hmShowBridgeToast(`${imported} giorni importati da Mounjaro ✓`, 'ok');
+}
+
+function hmExportToMJ() {
+  let synced = 0;
+  healthData.forEach(hmRow => {
+    if(!hmRow.date) return;
+    const dateStr = hmRow.date.split('T')[0];
+    const mjKey   = 'mj_day_' + dateStr;
+    let mjRec = null;
+    try { mjRec = JSON.parse(localStorage.getItem(mjKey) || 'null'); } catch(e) {}
+    if(!mjRec) {
+      mjRec = { date: dateStr, checks:{}, measurements:{}, symptoms:[], skincare:{}, savedAt: new Date().toISOString() };
+    }
+    if(!mjRec.measurements) mjRec.measurements = {};
+
+    let changed = false;
+    Object.entries(HM_BRIDGE_MAP).forEach(([mjField, hmField]) => {
+      const val = hmRow[hmField];
+      if(val != null && val !== '' && !mjRec.measurements[mjField]) {
+        mjRec.measurements[mjField] = String(val);
+        changed = true;
+      }
+    });
+
+    if(changed) {
+      mjRec._bridgedFromHM = new Date().toISOString();
+      localStorage.setItem(mjKey, JSON.stringify(mjRec));
+      synced++;
+    }
+  });
+
+  _hmShowBridgeToast(synced ? `${synced} giorni inviati a Mounjaro ✓` : 'Nessun nuovo dato da inviare', synced ? 'ok' : 'warn');
+}
+
+function _hmShowBridgeToast(msg, type) {
+  document.getElementById('_hmBridgeToast')?.remove();
+  const d = document.createElement('div');
+  d.id = '_hmBridgeToast';
+  const bg = type === 'ok' ? '#1a2a4a' : '#7b5800';
+  d.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;
+    background:${bg};color:white;border-radius:10px;padding:11px 20px;font-family:'DM Sans',sans-serif;
+    font-size:.85em;box-shadow:0 6px 24px rgba(0,0,0,.25);animation:fadeIn .2s ease;white-space:nowrap`;
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3500);
 }
 
 // ============================================================
@@ -2338,7 +2597,7 @@ function clearInputs() {
 // ============================================================
 function saveData() {
   const date = document.getElementById('inputDate').value;
-  if(!date){ alert('Inserire la data'); return; }
+  if(!date){ _hmShowBridgeToast('Inserire la data', 'warn'); return; }
   const weight = parseFloat(document.getElementById('inputWeight').value)||null;
   const waist = parseFloat(document.getElementById('inputWaist').value)||null;
   const systolic = parseInt(document.getElementById('inputSystolic').value)||null;
@@ -2685,7 +2944,7 @@ function showChart(type, btn) {
   const ctx=document.getElementById('healthChart').getContext('2d');
   const sorted=[...healthData].reverse();
   const labels=sorted.map(d=>new Date(d.date).toLocaleDateString('it-IT'));
-  const baseOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'Montserrat'},color:'#2c3e50'}}},scales:{y:{ticks:{color:'#6b7c93'},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{color:'#6b7c93'},grid:{color:'rgba(0,0,0,.05)'}}}};
+  const baseOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'DM Sans'},color:'#2c3e50'}}},scales:{y:{ticks:{color:'#6b7c93'},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{color:'#6b7c93'},grid:{color:'rgba(0,0,0,.05)'}}}};
   let cfg={type:'line',options:baseOpts};
   switch(type){
     case 'bmi':
@@ -2978,7 +3237,7 @@ async function showParsedPreview(values, filename, rawText, pdfDataUrl) {
 // ============================================================
 function saveConversation(){
   if(!aiConversationHistory || aiConversationHistory.length === 0){
-    alert('Nessuna conversazione da salvare. Avvia prima una consulenza AI.');
+    _hmShowBridgeToast('Avvia prima una consulenza AI', 'warn'); return;
     return;
   }
   const name = appSettings.name || 'Paziente';
@@ -3023,7 +3282,7 @@ function saveConversation(){
 
 function printConversation(){
   if(!aiConversationHistory || aiConversationHistory.length === 0){
-    alert('Nessuna conversazione da stampare.');
+    _hmShowBridgeToast('Nessuna conversazione da stampare', 'warn'); return;
     return;
   }
   const name = appSettings.name || 'Paziente';
@@ -3111,56 +3370,48 @@ function importFullBackup(event){
   reader.onload = e => {
     let backup;
     try{ backup = JSON.parse(e.target.result); }
-    catch(err){ alert('File non valido: ' + err.message); return; }
+    catch(err){ _hmShowBridgeToast('File non valido: '+err.message, 'warn'); return; }
+
+    const doRestore = () => {
+      const exportedAt = backup._exportedAt ? new Date(backup._exportedAt).toLocaleString('it-IT') : 'data sconosciuta';
+      const n = (backup.healthData||backup.profiles?.[0]?.healthData||[]).length;
+      showInlineConfirm(`Ripristino backup del ${exportedAt} — ${n} misurazioni. I dati attuali verranno sostituiti.`, () => {
+        // Restore all data
+        if(backup.creditHistory)  localStorage.setItem('hm_credit', JSON.stringify(backup.creditHistory));
+        if(backup.budgetSettings) localStorage.setItem('hm_budget', JSON.stringify(backup.budgetSettings));
+
+        if(Array.isArray(backup.profiles) && backup.profiles.length > 0){
+          backup.profiles.forEach(pd => {
+            const keys = profileKeys(pd.profile.id);
+            if(pd.healthData)    localStorage.setItem(keys.healthData,    JSON.stringify(pd.healthData));
+            if(pd.bloodAnalyses) localStorage.setItem(keys.bloodAnalyses, JSON.stringify(pd.bloodAnalyses));
+            if(pd.appSettings)   localStorage.setItem(keys.settings,      JSON.stringify(pd.appSettings));
+            if(pd.documents)     localStorage.setItem(keys.documents,     JSON.stringify(pd.documents));
+          });
+          const existingProfiles = getProfiles();
+          backup.profiles.forEach(pd => {
+            if(!existingProfiles.find(p=>p.id===pd.profile.id)) existingProfiles.push(pd.profile);
+          });
+          saveProfiles(existingProfiles);
+          switchProfile(backup.profiles[0].profile.id);
+          _hmShowBridgeToast(`✅ Backup ripristinato — ${backup.profiles.length} profili`, 'ok');
+        } else {
+          if(Array.isArray(backup.healthData))    healthData    = backup.healthData;
+          if(Array.isArray(backup.bloodAnalyses)) bloodAnalyses = backup.bloodAnalyses;
+          if(backup.appSettings)                  appSettings   = backup.appSettings;
+          if(Array.isArray(backup.documents))     uploadedDocuments = backup.documents;
+          saveToStorage();
+          _hmShowBridgeToast(`✅ Backup ripristinato — ${(backup.healthData||[]).length} misurazioni`, 'ok');
+        }
+        renderProfileBar(); updateAll(); updateCreditUI(); updateKeyStatusUI();
+      });
+    };
 
     if(!backup._app || backup._app !== 'HealthMonitorPro'){
-      if(!confirm('Questo file non sembra un backup di Health Monitor Pro.\nProcedere comunque con il ripristino?')) return;
-    }
-
-    const exportedAt = backup._exportedAt ? new Date(backup._exportedAt).toLocaleString('it-IT') : 'data sconosciuta';
-    const msg = `Ripristino backup del ${exportedAt}\n\n` +
-      `Contiene:\n` +
-      `• ${(backup.healthData||[]).length} misurazioni vitali\n` +
-      `• ${(backup.bloodAnalyses||[]).length} analisi del sangue\n` +
-      `• ${(backup.documents||[]).length} documenti clinici\n\n` +
-      `⚠️ I dati attuali verranno SOSTITUITI. Continuare?`;
-
-    if(!confirm(msg)) return;
-
-    // Restore all data
-    if(backup.creditHistory)  localStorage.setItem('hm_credit', JSON.stringify(backup.creditHistory));
-    if(backup.budgetSettings) localStorage.setItem('hm_budget', JSON.stringify(backup.budgetSettings));
-
-    if(Array.isArray(backup.profiles) && backup.profiles.length > 0){
-      // Multi-profile backup
-      backup.profiles.forEach(pd => {
-        const keys = profileKeys(pd.profile.id);
-        if(pd.healthData)    localStorage.setItem(keys.healthData,    JSON.stringify(pd.healthData));
-        if(pd.bloodAnalyses) localStorage.setItem(keys.bloodAnalyses, JSON.stringify(pd.bloodAnalyses));
-        if(pd.appSettings)   localStorage.setItem(keys.settings,      JSON.stringify(pd.appSettings));
-        if(pd.documents)     localStorage.setItem(keys.documents,     JSON.stringify(pd.documents));
-      });
-      const existingProfiles = getProfiles();
-      backup.profiles.forEach(pd => {
-        if(!existingProfiles.find(p=>p.id===pd.profile.id)) existingProfiles.push(pd.profile);
-      });
-      saveProfiles(existingProfiles);
-      switchProfile(backup.profiles[0].profile.id);
-      alert(`✅ Backup ripristinato!\n${backup.profiles.length} profili importati.`);
+      showInlineConfirm('Il file non sembra un backup di Health Monitor Pro. Procedere comunque?', doRestore);
     } else {
-      // Legacy single-profile backup
-      if(Array.isArray(backup.healthData))    healthData    = backup.healthData;
-      if(Array.isArray(backup.bloodAnalyses)) bloodAnalyses = backup.bloodAnalyses;
-      if(backup.appSettings)                  appSettings   = backup.appSettings;
-      if(Array.isArray(backup.documents))     uploadedDocuments = backup.documents;
-      saveToStorage();
-      alert(`✅ Backup ripristinato!\n${(backup.healthData||[]).length} misurazioni.`);
+      doRestore();
     }
-
-    renderProfileBar();
-    updateAll();
-    updateCreditUI();
-    updateKeyStatusUI();
   };
   reader.readAsText(file);
 }
@@ -3373,7 +3624,7 @@ function savePressureEntry(){
   const time = document.getElementById('presEntTime').value;
   const note = document.getElementById('presEntNote').value.trim();
   if(!sys||!dia||sys<60||dia<40||sys>250){
-    alert('Inserire valori validi di pressione.');
+    _hmShowBridgeToast('Inserire valori validi di pressione', 'warn');
     return;
   }
   const meas = loadPressureMeasurements(pressureEntryMonth);
@@ -3387,10 +3638,11 @@ function savePressureEntry(){
 }
 
 function resetPressureSchedule(){
-  if(!confirm('Eliminare tutte le misurazioni del mese corrente?')) return;
-  const mk = getCurrentPressureMonth();
-  localStorage.removeItem(pressureStorageKey('m_'+mk));
-  renderPressureSchema();
+  showInlineConfirm('Eliminare tutte le misurazioni del mese corrente?', ()=>{
+    const mk = getCurrentPressureMonth();
+    localStorage.removeItem(pressureStorageKey('m_'+mk));
+    renderPressureSchema();
+  });
 }
 
 function updatePressureAlertTime(slot, val){
@@ -3726,7 +3978,7 @@ function saveGlucoseEntry(){
   const time = document.getElementById('glucoseEntryTime').value;
   const note = document.getElementById('glucoseEntryNote').value.trim();
   if(!val || isNaN(val) || val < 20 || val > 600){
-    alert('Inserire un valore valido (20–600 mg/dL)');
+    _hmShowBridgeToast('Inserire un valore valido (20–600 mg/dL)', 'warn');
     return;
   }
   const slot = GLUCOSE_SLOTS[glucoseEntrySlot];
@@ -3774,9 +4026,10 @@ function renderGlucoseSummary(monthKey, measurements){
 }
 
 function resetGlucoseSchedule(){
-  if(!confirm('Ripristinare lo schema predefinito? Le misurazioni inserite non verranno eliminate.')) return;
-  saveGlucoseSchedule({...DEFAULT_SCHEDULE});
-  renderGlucoseSchema();
+  showInlineConfirm('Ripristinare lo schema predefinito? Le misurazioni inserite non verranno eliminate.', ()=>{
+    saveGlucoseSchedule({...DEFAULT_SCHEDULE});
+    renderGlucoseSchema();
+  });
 }
 
 
@@ -3822,7 +4075,7 @@ function renderAlertTimesPanel(){
     <div>
       <label style="font-size:.76em;font-weight:700;color:#555;display:block;margin-bottom:4px">${s.label}</label>
       <input type="time" value="${times[s.id]}" onchange="updateAlertTime('${s.id}',this.value)"
-        style="padding:5px 8px;border:1px solid #c5cae9;border-radius:6px;font-family:'Montserrat',sans-serif;font-size:.82em;width:100%">
+        style="padding:5px 8px;border:1px solid #c5cae9;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82em;width:100%">
     </div>`).join('');
 }
 
@@ -4688,17 +4941,17 @@ function renderReviewValues(values){
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button onclick="copyUnknownPrompt()" style="
           padding:8px 14px;background:#e65100;color:white;border:none;border-radius:6px;
-          cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.8em;font-weight:600">
+          cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8em;font-weight:600">
           📋 Copia prompt da inviare al medico
         </button>
         <button onclick="shareUnknownWithFerretti()" style="
           padding:8px 14px;background:linear-gradient(135deg,#5c2d91,#7b2d8b);color:white;border:none;border-radius:6px;
-          cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.8em;font-weight:600">
+          cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8em;font-weight:600">
           🎓 Includi nella consulenza con Ferretti
         </button>
         <button onclick="document.getElementById('unknownMarkersAlert').style.display='none'" style="
           padding:8px 14px;background:#eee;color:#555;border:none;border-radius:6px;
-          cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.8em">
+          cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8em">
           Ignora
         </button>
       </div>
@@ -4737,8 +4990,8 @@ function renderReviewValues(values){
   html += `
     <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
       <span style="font-size:.8em;color:#666;font-weight:600">${values.length} valori</span>
-      <button onclick="confirmAllRows()" style="padding:5px 12px;background:#2e7d32;color:white;border:none;border-radius:5px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.76em;font-weight:700;margin-left:auto">✓ Conferma tutti</button>
-      <button onclick="resetAllConfirm()" style="padding:5px 10px;background:#eee;color:#555;border:none;border-radius:5px;cursor:pointer;font-family:'Montserrat',sans-serif;font-size:.76em">↩</button>
+      <button onclick="confirmAllRows()" style="padding:5px 12px;background:#2e7d32;color:white;border:none;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.76em;font-weight:700;margin-left:auto">✓ Conferma tutti</button>
+      <button onclick="resetAllConfirm()" style="padding:5px 10px;background:#eee;color:#555;border:none;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.76em">↩</button>
     </div>
     <table style="width:100%;border-collapse:collapse" id="reviewTable">
       <thead>
@@ -4781,20 +5034,20 @@ function renderReviewValues(values){
       </td>
       <td style="padding:10px;text-align:right">
         <input type="number" step="0.001" id="rv_val_${i}" value="${v.value}"
-          style="width:88px;padding:7px 10px;border:2px solid ${outRange?'#ef9a9a':isUnknown?'#ffcc80':'#bbdefb'};border-radius:6px;font-size:1em;font-weight:800;color:${outRange?'#c62828':'var(--primary)'};text-align:right;font-family:'Montserrat',sans-serif;background:${outRange?'#fff5f5':'white'}"
+          style="width:88px;padding:7px 10px;border:2px solid ${outRange?'#ef9a9a':isUnknown?'#ffcc80':'#bbdefb'};border-radius:6px;font-size:1em;font-weight:800;color:${outRange?'#c62828':'var(--primary)'};text-align:right;font-family:'DM Sans',sans-serif;background:${outRange?'#fff5f5':'white'}"
           onchange="onValueEdited(${i})" oninput="onValueEdited(${i})">
       </td>
       <td style="padding:10px 8px">
         <input type="text" id="rv_unit_${i}" value="${v.unit}"
-          style="width:64px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;font-size:.88em;font-family:'Montserrat',sans-serif;color:#555">
+          style="width:64px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;font-size:.88em;font-family:'DM Sans',sans-serif;color:#555">
       </td>
       <td style="padding:10px 8px;text-align:center">
         <input type="number" step="0.001" id="rv_min_${i}" value="${v.refMin??''}" placeholder="—"
-          style="width:64px;padding:7px 6px;border:1px solid #ddd;border-radius:6px;font-size:.88em;text-align:center;font-family:'Montserrat',sans-serif;color:#666">
+          style="width:64px;padding:7px 6px;border:1px solid #ddd;border-radius:6px;font-size:.88em;text-align:center;font-family:'DM Sans',sans-serif;color:#666">
       </td>
       <td style="padding:10px 8px;text-align:center">
         <input type="number" step="0.001" id="rv_max_${i}" value="${v.refMax??''}" placeholder="—"
-          style="width:64px;padding:7px 6px;border:1px solid #ddd;border-radius:6px;font-size:.88em;text-align:center;font-family:'Montserrat',sans-serif;color:#666">
+          style="width:64px;padding:7px 6px;border:1px solid #ddd;border-radius:6px;font-size:.88em;text-align:center;font-family:'DM Sans',sans-serif;color:#666">
       </td>
       <td style="padding:10px;text-align:center">
         <label style="cursor:pointer;display:flex;align-items:center;justify-content:center">
@@ -4878,7 +5131,7 @@ function updateConfirmProgress(){
 
 function saveBloodPdfData(){
   const date = document.getElementById('bloodPdfDate').value;
-  if(!date){ alert('Inserire la data del referto'); return; }
+  if(!date){ _hmShowBridgeToast('Inserire la data del referto', 'warn'); return; }
   const count = parseInt(document.getElementById('reviewRowsContainer')?.getAttribute('data-count')||'0');
 
   // Soft warning only — don't block save
@@ -4887,7 +5140,7 @@ function saveBloodPdfData(){
     for(let i=0;i<count;i++) if(!document.getElementById(`confirm_${i}`)?.checked) missing.push(i);
     if(missing.length > 0 && missing.length === count){
       // none confirmed at all — ask once
-      if(!confirm(`Nessun valore è stato verificato manualmente.\nProcedere comunque con il salvataggio?`)) return;
+      // Salva comunque — nessuna verifica manuale (rimosso confirm bloccante)
     }
     if(false){  // disabled strict gate
       const r=null;
@@ -4912,7 +5165,7 @@ function saveBloodPdfData(){
       confirmed: true
     });
   }
-  if(values.length===0){ alert('Nessun valore da salvare'); return; }
+  if(values.length===0){ _hmShowBridgeToast('Nessun valore da salvare', 'warn'); return; }
 
   // Note any unknown markers that user wants shared with Ferretti
   const unknownNote = includeUnknownInFerretti
@@ -4987,7 +5240,7 @@ function fillManualDefaults(i) {
 
 function saveManualBloodEntry() {
   const date = document.getElementById('bloodManualDate').value;
-  if(!date){ alert('Inserire la data'); return; }
+  if(!date){ _hmShowBridgeToast('Inserire la data', 'warn'); return; }
   const values = [];
   document.querySelectorAll('[id^="mf_sel_"]').forEach(sel=>{
     const i = sel.id.replace('mf_sel_','');
@@ -5004,7 +5257,7 @@ function saveManualBloodEntry() {
       refMax: parseFloat(document.getElementById('mf_max_'+i).value)||null,
     });
   });
-  if(values.length===0){ alert('Inserire almeno un valore'); return; }
+  if(values.length===0){ _hmShowBridgeToast('Inserire almeno un valore', 'warn'); return; }
   bloodAnalyses.push({
     id: Date.now(), date, source: 'Inserimento manuale', values,
     createdAt: new Date().toISOString()
@@ -5109,7 +5362,7 @@ function showBloodEvolutionChart(key, label, btn){
   currentBloodChart = new Chart(ctx, {
     type: 'line',
     data: { labels: points.map(p=>new Date(p.date).toLocaleDateString('it-IT')), datasets },
-    options: { responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'Montserrat'}}}},scales:{y:{ticks:{color:'#6b7c93'},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{color:'#6b7c93'}}}}
+    options: { responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'DM Sans'}}}},scales:{y:{ticks:{color:'#6b7c93'},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{color:'#6b7c93'}}}}
   });
 }
 
@@ -5137,7 +5390,7 @@ function showBloodValueDetail(key, label){
   currentBloodDetailChart = new Chart(ctx2,{
     type:'line',
     data:{labels:points.map(p=>new Date(p.date).toLocaleDateString('it-IT')),datasets},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'Montserrat'}}}},scales:{y:{ticks:{color:'#6b7c93'}},x:{ticks:{color:'#6b7c93'}}}}
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'DM Sans'}}}},scales:{y:{ticks:{color:'#6b7c93'}},x:{ticks:{color:'#6b7c93'}}}}
   });
   
   // Table
@@ -5155,21 +5408,21 @@ function showBloodValueDetail(key, label){
 }
 
 function deleteBloodAnalysis(id){
-  if(confirm('Eliminare questa analisi?')){
+  showInlineConfirm('Eliminare questa analisi?', ()=>{
     bloodAnalyses = bloodAnalyses.filter(a=>a.id!==id);
     saveToStorage();
     updateStats();
     renderBloodAnalyses();
-  }
+  });
 }
 
 function clearBloodData(){
-  if(confirm('Eliminare TUTTE le analisi del sangue?')){
+  showInlineConfirm('Eliminare TUTTE le analisi del sangue? Azione irreversibile.', ()=>{
     bloodAnalyses=[];
     saveToStorage();
     updateStats();
     renderBloodAnalyses();
-  }
+  });
 }
 
 // ============================================================
@@ -5584,7 +5837,7 @@ function generateInsights(){
     </div>` : ''}
     <button onclick="showSection('ai', document.querySelectorAll('.nav-tab')[5])" style="
       background:linear-gradient(135deg,#5c2d91,#7b2d8b);color:white;border:none;
-      padding:14px 28px;font-family:'Montserrat',sans-serif;font-size:.92em;font-weight:500;
+      padding:14px 28px;font-family:'DM Sans',sans-serif;font-size:.92em;font-weight:500;
       border-radius:50px;cursor:pointer;box-shadow:0 4px 15px rgba(92,45,145,.3);
       transition:all .3s;
     " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
@@ -5617,9 +5870,12 @@ function saveRelazione(rel){
   localStorage.setItem(RELAZIONE_KEY(), JSON.stringify(rel));
 }
 function deleteRelazione(){
-  if(!confirm('Eliminare la Relazione Ferretti? I dati raw non verranno eliminati ma la prossima consulenza ripartirà da zero.')) return;
+  showInlineConfirm('Eliminare la Relazione Ferretti? La prossima consulenza ripartirà da zero.', _doDeleteRelazione);
+}
+function _doDeleteRelazione(){
   localStorage.removeItem(RELAZIONE_KEY());
   updateRelazioneUI();
+  _hmShowBridgeToast('Relazione eliminata ✓', 'ok');
 }
 
 function updateRelazioneUI(){
@@ -5667,7 +5923,7 @@ function countNewDataSinceRelazione(rel){
 
 function viewRelazione(){
   const rel = loadRelazione();
-  if(!rel){ alert('Nessuna relazione disponibile.'); return; }
+  if(!rel){ _hmShowBridgeToast('Nessuna relazione disponibile', 'warn'); return; }
   const w = window.open('','_blank');
   const dt = new Date(rel.createdAt).toLocaleString('it-IT');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relazione Ferretti</title>
@@ -5686,7 +5942,7 @@ function viewRelazione(){
 
 async function generaRelazioneFinal(){
   const apiKey = getApiKey();
-  if(!apiKey){ alert('API Key non configurata.'); return; }
+  if(!apiKey){ _hmShowBridgeToast('API Key non configurata', 'warn'); return; }
 
   const budgetOk = await new Promise(resolve => {
     if(preBudgetCheck(resolve)){ resolve(true); }
@@ -5694,9 +5950,9 @@ async function generaRelazioneFinal(){
   if(!budgetOk) return;
 
   // Show generating state
-  addChatMessage('user', '📋 **Genera Relazione Clinica Definitiva**\n\nPer favore redigi una Relazione Clinica Completa che riassuma tutta la cartella, da usare come base per le future consulenze.');
+  appendChatMessage('user', '📋 **Genera Relazione Clinica Definitiva**\n\nPer favore redigi una Relazione Clinica Completa che riassuma tutta la cartella, da usare come base per le future consulenze.');
 
-  const typingEl = addTypingIndicator();
+  const typingId = appendTypingIndicator();
   if(document.getElementById('aiSendBtn')) document.getElementById('aiSendBtn').disabled = true;
 
   const relazionePrompt = `Sei il Prof. Lorenzo Ferretti. Devi generare una RELAZIONE CLINICA DEFINITIVA che servirà come memoria persistente per tutte le future consulenze con questo paziente.
@@ -5767,7 +6023,7 @@ IMPORTANTE: Questa relazione sostituirà tutti i dati raw. Deve essere autosuffi
     trackApiUsage(data.usage, 'claude-sonnet-4-20250514');
 
     const relazioneText = data.content?.[0]?.text || '';
-    typingEl?.remove();
+    removeTypingIndicator(typingId);
 
     // Save relazione
     const rel = {
@@ -5788,12 +6044,12 @@ IMPORTANTE: Questa relazione sostituirà tutti i dati raw. Deve essere autosuffi
       archiveDataToDrive(rel).catch(e => console.warn('Drive archive failed:', e));
     }
 
-    addChatMessage('assistant', relazioneText);
+    appendChatMessage('assistant', relazioneText);
     updateRelazioneUI();
 
     // Success message
     setTimeout(()=>{
-      addChatMessage('assistant',
+      appendChatMessage('assistant',
         '✅ **Relazione salvata con successo.**\n\n' +
         'La cartella è stata compressa in questa relazione clinica. Nelle prossime consulenze, il contesto partirà da questo documento invece che dai dati raw.\n\n' +
         (driveAccessToken ? '☁️ I dati precedenti sono stati archiviati su Google Drive.' : '💡 Suggerisco di connetterti a Google Drive (Impostazioni) per archiviare i dati precedenti.')
@@ -5801,8 +6057,8 @@ IMPORTANTE: Questa relazione sostituirà tutti i dati raw. Deve essere autosuffi
     }, 500);
 
   } catch(e){
-    typingEl?.remove();
-    addChatMessage('assistant', `❌ Errore generazione relazione: ${e.message}`);
+    removeTypingIndicator(typingId);
+    appendChatMessage('assistant', `❌ Errore generazione relazione: ${e.message}`);
   }
   if(document.getElementById('aiSendBtn')) document.getElementById('aiSendBtn').disabled = false;
 }
@@ -6063,7 +6319,11 @@ function downloadPromptTxt(){
   downloadFile(prompt, `prompt-medico-${name}-${new Date().toISOString().split('T')[0]}.txt`, 'text/plain');
 }
 
+let _aiStarting = false;
 async function startAIChat(){
+  if(_aiStarting) return;
+  _aiStarting = true;
+  setTimeout(()=>{ _aiStarting = false; }, 3000);
   const apiKey = getApiKey();
   if(!apiKey){
     document.getElementById('aiPreError').innerHTML = `<div class="ai-error" style="margin-top:15px"><h3>🔑 API Key non configurata</h3><p>Vai in <strong>Impostazioni → API Key Anthropic</strong> e inserisci la tua chiave da <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p></div>`;
@@ -6303,13 +6563,55 @@ function formatAIText(text){
 }
 
 function resetAIChat(){
-  if(aiConversationHistory.length > 0 && !confirm('Vuoi iniziare una nuova conversazione? La sessione corrente andrà persa (il trascritto è già salvato).')) return;
+  if(aiConversationHistory.length > 0){
+    showInlineConfirm('Iniziare una nuova conversazione? La sessione corrente andrà persa.', ()=>{
+      _doResetAIChat();
+    });
+    return;
+  }
+  _doResetAIChat();
+}
+function _doResetAIChat(){
   aiConversationHistory = [];
   aiChatActive = false;
   aiTyping = false;
   document.getElementById('aiChatInterface').style.display = 'none';
   document.getElementById('aiPreStart').style.display = 'block';
   document.getElementById('aiPreError').innerHTML = '';
+}
+
+// ── Inline toast-confirm (sostituisce confirm() bloccante) ──────
+function showInlineConfirm(msg, onOk){
+  // Remove any existing
+  document.getElementById('_hmConfirm')?.remove();
+  const d = document.createElement('div');
+  d.id = '_hmConfirm';
+  d.style.cssText = [
+    'position:fixed','bottom:80px','left:50%','transform:translateX(-50%)',
+    'z-index:99999','background:#1a2a4a','color:white',
+    'border-radius:14px','padding:14px 20px','box-shadow:0 8px 32px rgba(0,0,0,.35)',
+    'max-width:340px','width:90%','font-family:\'DM Sans\',sans-serif',
+    'font-size:.85em','line-height:1.5','animation:fadeIn .2s ease'
+  ].join(';');
+  d.innerHTML = `
+    <div style="margin-bottom:12px">${msg}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button id="_hmConfirmNo"
+        style="padding:7px 16px;border:1px solid rgba(255,255,255,.25);background:transparent;color:rgba(255,255,255,.75);
+               border-radius:8px;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:.85em">
+        Annulla
+      </button>
+      <button id="_hmConfirmYes"
+        style="padding:7px 16px;border:none;background:var(--accent);color:#1a2a4a;font-weight:600;
+               border-radius:8px;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:.85em">
+        Conferma
+      </button>
+    </div>`;
+  document.body.appendChild(d);
+  const remove = () => d.remove();
+  document.getElementById('_hmConfirmYes').onclick = () => { remove(); onOk(); };
+  document.getElementById('_hmConfirmNo').onclick  = remove;
+  setTimeout(remove, 8000);
 }
 
 function buildChatTranscript(){
@@ -6323,7 +6625,7 @@ function buildChatTranscript(){
 }
 
 function printChatTranscript(){
-  if(aiConversationHistory.length===0){ alert('Nessuna conversazione da stampare'); return; }
+  if(aiConversationHistory.length===0){ _hmShowBridgeToast('Nessuna conversazione da stampare', 'warn'); return; return; }
   const w = window.open('','_blank');
   let html = `<html><head><title>Consulenza Medica AI</title><style>
     body{font-family:Georgia,serif;max-width:800px;margin:40px auto;line-height:1.8;color:#333;font-size:11pt}
@@ -6353,7 +6655,7 @@ function printChatTranscript(){
 }
 
 function downloadChatTranscript(){
-  if(aiConversationHistory.length===0){ alert('Nessuna conversazione da scaricare'); return; }
+  if(aiConversationHistory.length===0){ _hmShowBridgeToast('Nessuna conversazione da scaricare', 'warn'); return; return; }
   const txt = buildChatTranscript();
   const name = (appSettings.name||'paziente').replace(/\s/g,'-');
   downloadFile(txt, `consulenza-ai-${name}-${new Date().toISOString().split('T')[0]}.txt`, 'text/plain');
@@ -6931,9 +7233,12 @@ function resetCreditSession(){
 }
 
 function resetAllCreditHistory(){
-  if(!confirm('Azzerare tutto lo storico utilizzo API? Questa azione è irreversibile.')) return;
+  showInlineConfirm('Azzerare tutto lo storico utilizzo API? Azione irreversibile.', _doResetAPIHistory);
+}
+function _doResetAPIHistory(){
   localStorage.removeItem('hm_credit');
   resetCreditSession();
+  _hmShowBridgeToast('Storico API azzerato ✓', 'ok');
 }
 
 function saveBudgetSettings(){
@@ -6976,31 +7281,36 @@ function getApiKey(){
 
 function saveApiKey(){
   const k = document.getElementById('settingsApiKey').value.trim();
-  if(!k){ alert('Inserire una API key valida'); return; }
-  if(!k.startsWith('sk-ant-')){ 
-    if(!confirm('La chiave non inizia con "sk-ant-" — potrebbe essere errata. Salvare comunque?')) return;
+  if(!k){ _hmShowBridgeToast('Inserire una API key valida', 'warn'); return; }
+  if(!k.startsWith('sk-ant-')){
+    showInlineConfirm('La chiave non inizia con "sk-ant-" — potrebbe essere errata. Salvare comunque?', ()=>{ _doSaveApiKey(k); });
+    return;
   }
-
+  _doSaveApiKey(k);
+}
+function _doSaveApiKey(k){
   const useLocal = document.getElementById('keyStorageLocal')?.checked;
   if(useLocal){
     localStorage.setItem('hm_apikey', k);
     sessionStorage.removeItem('hm_apikey');
   } else {
     sessionStorage.setItem('hm_apikey', k);
-    localStorage.removeItem('hm_apikey'); // remove from localStorage if was there
+    localStorage.removeItem('hm_apikey');
   }
-
   updateKeyStatusUI();
   showSuccessAnimation();
 }
 
 function deleteApiKey(){
-  if(!confirm('Eliminare la API key? Le funzioni AI non saranno disponibili.')) return;
+  showInlineConfirm('Eliminare la API key? Le funzioni AI non saranno disponibili.', _doDeleteApiKey);
+}
+function _doDeleteApiKey(){
   sessionStorage.removeItem('hm_apikey');
   localStorage.removeItem('hm_apikey');
-  document.getElementById('settingsApiKey').value = '';
+  const f = document.getElementById('settingsApiKey');
+  if(f) f.value = '';
   updateKeyStatusUI();
-  alert('API key eliminata.');
+  _hmShowBridgeToast('API key eliminata ✓', 'ok');
 }
 
 function onKeyStorageChange(){
@@ -7045,24 +7355,25 @@ function updateKeyStatusUI(){
 // ============================================================
 function deleteDay(date){
   const count = healthData.filter(r=>r.date===date).length;
-  if(!confirm('Eliminare tutti i '+count+' inserimenti del '+new Date(date+'T12:00').toLocaleDateString('it-IT')+'?')) return;
-  healthData = healthData.filter(r=>r.date!==date);
-  saveToStorage();
-  updateAll();
+  const dateLabel = new Date(date+'T12:00').toLocaleDateString('it-IT');
+  showInlineConfirm(`Eliminare ${count} inserimento/i del ${dateLabel}?`, ()=>{
+    healthData = healthData.filter(r=>r.date!==date);
+    saveToStorage(); updateAll();
+  });
 }
 
 function deleteRecord(id){
-  if(confirm('Eliminare questa misurazione?')){
+  showInlineConfirm('Eliminare questa misurazione?', ()=>{
     healthData=healthData.filter(r=>r.id!==id);
     saveToStorage(); updateAll();
-  }
+  });
 }
 function clearAllData(){
   const pName = getActiveProfileName();
-  if(confirm(`Eliminare TUTTE le misurazioni del profilo "${pName}"?\nQuesta operazione è irreversibile.`)){
+  showInlineConfirm(`Eliminare TUTTE le misurazioni del profilo "${pName}"? Azione irreversibile.`, ()=>{
     healthData=[];
     saveToStorage(); updateAll();
-  }
+  });
 }
 
 // ============================================================
@@ -7073,7 +7384,7 @@ function clearAllData(){
 // EXPORT / IMPORT
 // ============================================================
 function exportData(){
-  if(healthData.length===0){ alert('Nessun dato da esportare'); return; }
+  if(healthData.length===0){ _hmShowBridgeToast('Nessun dato da esportare', 'warn'); return; }
   const csv=[['Data','Peso(kg)','BMI','Sistolica','Diastolica','FC(bpm)','Glicemia','Temperatura','Farmaci','Note'].join(';'),...healthData.map(r=>[r.date,r.weight||'',r.bmi||'',r.systolic||'',r.diastolic||'',r.heartRate||'',r.glucose||'',r.temperature||'',r.medications||'',(r.notes||'').replace(/;/g,',')].join(';'))].join('\n');
   downloadFile(csv,`health-monitor-${new Date().toISOString().split('T')[0]}.csv`,'text/csv');
   showSuccessAnimation();
@@ -7091,15 +7402,15 @@ function importJSON(event){
       const data=JSON.parse(e.target.result);
       if(data.healthData&&Array.isArray(data.healthData)){
         const msg = `Importare ${data.healthData.length} misurazioni${data.bloodAnalyses?' e '+data.bloodAnalyses.length+' analisi sangue':''}? I dati esistenti verranno sostituiti.`;
-        if(confirm(msg)){
+        showInlineConfirm(msg, ()=>{
           healthData=data.healthData;
           if(data.settings) appSettings=data.settings;
           if(data.bloodAnalyses) bloodAnalyses=data.bloodAnalyses;
           if(data.documents) uploadedDocuments=data.documents;
           saveToStorage(); updateSettingsDisplay(); updateAll(); renderUploadedFiles(); renderBloodAnalyses(); showSuccessAnimation();
-        }
-      } else alert('File non valido.');
-    } catch(err){ alert('Errore importazione: '+err.message); }
+        });
+      } else { _hmShowBridgeToast('File non valido', 'warn'); }
+    } catch(err){ _hmShowBridgeToast('Errore importazione: '+err.message, 'warn'); }
   };
   reader.readAsText(file); event.target.value='';
 }
@@ -7154,7 +7465,7 @@ async function handleFileUpload(event){
     reader.onload = async function(e){
       const b64 = e.target.result;
       if(b64.length > 6*1024*1024){
-        alert(`"${file.name}" è troppo grande (max ~4MB compressa). Comprimi il PDF e riprova.`);
+        _hmShowBridgeToast(`"${file.name}" è troppo grande (max ~4MB). Comprimi il PDF.`, 'warn');
         return;
       }
       const doc = {
@@ -7406,17 +7717,18 @@ function renderUploadedFiles(){
 }
 
 function removeDocument(id){
-  if(!confirm('Eliminare questo documento? L\'analisi clinica andrà persa.')) return;
-  uploadedDocuments = uploadedDocuments.filter(d=>d.id!==id);
-  saveToStorage();
-  renderUploadedFiles();
-  if(typeof generateInsights==='function') generateInsights();
+  showInlineConfirm('Eliminare il documento? L\'analisi andrà persa.', ()=>{
+    uploadedDocuments = uploadedDocuments.filter(d=>d.id!==id);
+    saveToStorage();
+    renderUploadedFiles();
+    if(typeof generateInsights==='function') generateInsights();
+  });
 }
 
 // ── DOCUMENT VIEWER ─────────────────────────────────────────
 function viewDocument(id){
   const doc = uploadedDocuments.find(d=>d.id===id);
-  if(!doc?.data){ alert('Dati non disponibili. Ricarica il file.'); return; }
+  if(!doc?.data){ _hmShowBridgeToast('Dati non disponibili. Ricarica il file.', 'warn'); return; }
   document.getElementById('docViewerTitle').textContent = doc.name;
   document.getElementById('docViewerMeta').textContent = `${doc.size} · ${doc.date}`;
   const body = document.getElementById('docViewerBody');
@@ -7468,7 +7780,7 @@ function closeDocViewer(){
   user-select:none;
 ">
   <div style="
-    font-family:'Montserrat',sans-serif;
+    font-family:'DM Sans',sans-serif;
     font-size:.58em;
     letter-spacing:.08em;
     color:rgba(26,42,74,.35);
